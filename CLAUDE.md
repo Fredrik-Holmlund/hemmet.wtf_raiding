@@ -44,17 +44,18 @@ Preview-konfigurationen heter `raiding` (port 5174).
 
 ## Sidan
 
-Flera sidor (hash-adresser, så att det fungerar som statisk sida). Headern är densamma som på hemmet.wtf (Hem · Levelingresan · Raiding · Om oss, *Flytta in*, *Meny* på mobil). Sidans egna delar är flikar under: Översikt · Raidgrupper · Roller & ansvar.
+Flera sidor (hash-adresser, så att det fungerar som statisk sida). Headern är byggd som på hemmet.wtf, genomskinlig över heron,
+men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Loggan leder till hemmet.wtf.
 
-- **Start** `#start` = konceptsidan, byggd på ledningens textutkast (oktober 2026, markerat "ska bytas ut" – byt texterna i
-  `index.html` när den riktiga texten finns): hero med egen bild (`assets/hero.webp`, tornet i solnedgången) och *Se våra raidgrupper* (ingen namnsök; borttagen 2026-10-12), *Ett hem, många sätt att raida* (A/B/C + koderna),
-  *Vem håller i nycklarna?* (hierarkin med **bara titlar**, klickbara, + de sex uppgifterna med korta texter ur `functions.summary`)
-  och *Hur hittar jag en raidgrupp?* (kolla grupperna, läs om gruppen på dess sida, säg hej direkt eller i gruppens Discord-tråd, RaidHelper). `#raidgrupper/soker` öppnar listan filtrerad.
+- **Översikt** `#start`: hero som på hemmet.wtf med egen bild (`assets/hero.webp`), glöd (`embers.js`) och *Vi ses i raiden.* Tre siffror ur
+  databasen (raidgrupper, öppna för signups, i hemmet) i stället för nedräkningen. Rullbandet visar veckans raids totalt och per veckodag
+  (`raid_days` på aktiva grupper, en raid per grupp och dag; bara dagar med raids). Under det grupperna per nivå (A/B/C + koderna).
+  **Förklaringarna hör inte hit:** "Ordning i hemmet" och *Hitta ditt rum* finns inte på live-sidan. `#raidgrupper/soker` öppnar listan filtrerad.
 - **Raidgrupper** `#raidgrupper`: korten under rubrikerna 40-manna, 20-manna och 10-manna. Överst filter (2026-10-12): storlek,
   dagar (flera val = någon av dem), starttid (före 19, 19–21, 21 och senare), *Söker* tank/healer/DPS (grupper med plats som behöver rollen) och "Bara grupper som är öppna för signups", med
   "Visar N av M" och *Rensa filtren*. Ny grupp-korten döljs medan man filtrerar. Ledningen ser "+ Ny 40-mannagrupp" osv. sist under varje rubrik (`#ny-grupp/40`, storleken förvald), tomma
   rubriker och *Borttagna grupper*.
-- **Roller & ansvar** `#roller`: de fem rollerna, de sex funktionerna och ambitionsnivåerna.
+- **Roller & ansvar** `#roller`: de fem rollerna, de sex funktionerna, ambitionsnivåerna och *Vem håller i nycklarna?* (hierarkin med bara titlar, klickbara, och Raid Masterns stadgar med korta texter ur `functions.summary`).
 - **Raidgruppskorten** ser ut som spelets Group Finder (panelen med äventyrarna, `assets/lfg-panel.webp`, samma som gruppsöket
   på leveling-sidan), inte achievement-pergament: pergamentet betyder resultat och utmärkelser enligt formspråket.
 - **Signups** (hette Rekrytering; "rekrytering" gäller guilden, inte en grupp, beslut 2026-10-12) har tre lägen (`groups.signup`):

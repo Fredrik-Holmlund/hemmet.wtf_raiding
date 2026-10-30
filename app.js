@@ -1,6 +1,7 @@
 import { configured, getSession, currentMemberId, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
 import { can, isLeadership } from "./perms.js";
 import { renderAssignments, drawBoard, bindAssignments } from "./assignments.js";
+import { embers } from "./embers.js";
 
 const CLASS_COLORS = {
   warrior: "#C69B6D", paladin: "#F48CBA", hunter: "#AAD372", rogue: "#FFF468", priest: "#FFFFFF",
@@ -58,7 +59,7 @@ function index(data) {
 function refresh() {
   D = index(RAW);
   if (me) me = D.member[me.id] ?? null;
-  renderAccount(); renderOrg(); renderGroups(); renderRoles();
+  renderAccount(); renderHero(); renderOrg(); renderGroups(); renderRoles();
 }
 
 /* ---------- uppslag ---------- */
@@ -115,6 +116,23 @@ const selfChip = rm => rm ? `<button class="who who--self${rm.online ? " is-onli
 const qm = roleId => `<span class="qm" role="button" tabindex="0" data-role="${roleId}" aria-label="Om rollen ${esc(D.role[roleId].name)}">?</span>`;
 
 /* ---------- startsidan: hierarkin med titlar, nivåerna och de sex uppgifterna ---------- */
+/* heron: tre siffror i stället för hemmet.wtf:s nedräkning, och rullbandet med veckans raids */
+const DAY_NAMES = { mon: "Måndag", tue: "Tisdag", wed: "Onsdag", thu: "Torsdag", fri: "Fredag", sat: "Lördag", sun: "Söndag" };
+function renderHero() {
+  const groups = activeGroups();
+  const stat = (n, label) => `<div><b>${n}</b><span>${label}</span></div>`;
+  $("#heroStats").innerHTML = stat(groups.length, groups.length === 1 ? "raidgrupp" : "raidgrupper")
+    + stat(groups.filter(hasRoom).length, "öppna för signups") + stat(D.members.length, "i hemmet");
+  const raids = day => groups.filter(g => g.raid_days?.includes(day)).length;
+  const days = DAYS.map(([k]) => [k, raids(k)]).filter(([, n]) => n);
+  const week = days.reduce((sum, [, n]) => sum + n, 0);
+  const items = week
+    ? [`<em>${week}</em> ${week === 1 ? "raid" : "raids"} i veckan`, ...days.map(([k, n]) => `${DAY_NAMES[k]}: <em>${n}</em> ${n === 1 ? "raid" : "raids"}`)]
+    : ["Inga raids inlagda än", "Vi ses i raiden"];
+  const row = items.map((x, i) => `<span class="${i ? "" : "mile"}">${x}</span>`).join('<span class="dot">◆</span>') + '<span class="dot">◆</span>';
+  $("#ticker").innerHTML = row.repeat(8);   // två identiska halvor: remsan rullar ett halvt varv och börjar om
+}
+
 function renderOrg() {
   const n = activeGroups().length;
   // hierarkins rutor som Group Finder-paneler: rubriklist med titeln, beskrivningen under
@@ -726,6 +744,7 @@ const PAGES = { "": "start", "#": "start", "#start": "start", "#organisation": "
 const PAGE_TITLES = { start: "Raiding", raidgrupper: "Raidgrupper", roller: "Roller & ansvar" };
 
 function showMain(page, title) {
+  document.body.classList.toggle("has-hero", page === "start");
   document.querySelectorAll("main.page").forEach(el => { el.hidden = el.dataset.page !== page; });
   $("#groupPage").hidden = page !== null;
   const active = page ?? "raidgrupper";
@@ -733,6 +752,7 @@ function showMain(page, title) {
     if (a.dataset.nav === active) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
   document.title = `${title} · HEMMET`;
+  moveNavBar?.();
   window.scrollTo(0, 0);
 }
 const showPage = title => showMain(null, title);
@@ -900,17 +920,23 @@ function slideBar(nav) {
   return () => place(current());
 }
 
+let moveNavBar = null;
 function initHeader() {
-  slideBar($("#siteNav"));
+  document.querySelector('[data-nav="start"]').setAttribute("aria-current", "page");
+  moveNavBar = slideBar($("#siteNav"));
   const bar = $(".topbar"), menuBtn = $(".topbar__menu");
   menuBtn.addEventListener("click", () => menuBtn.setAttribute("aria-expanded", String(bar.classList.toggle("is-open"))));
   bar.addEventListener("click", e => { if (e.target.closest(".site-nav a")) { bar.classList.remove("is-open"); menuBtn.setAttribute("aria-expanded", "false"); } });
+  // genomskinlig över heron, som på hemmet.wtf
+  new IntersectionObserver(([e]) => bar.classList.toggle("at-top", e.isIntersecting), { threshold: .15 }).observe($("#hero"));
+  embers($("#embers"));
 }
 
 // sidan kan inte visa något utan databasen: heron står kvar med en förklaring
 function showDown(text) {
-  document.querySelectorAll('main.page[data-page="start"] > section, .subnav, .hero__cta').forEach(el => el.remove());
-  $(".hero .narrow").insertAdjacentHTML("beforeend", `<p class="note" role="status">${esc(text)}</p>`);
+  document.body.classList.add("has-hero");
+  document.querySelectorAll('main.page[data-page="start"] > section:not(.hero), .ticker, #siteNav, .topbar__menu, .hero .btn-row').forEach(el => el.remove());
+  $("#hero").insertAdjacentHTML("beforeend", `<p class="hero__status" role="status">${esc(text)}</p>`);
 }
 
 async function start() {

@@ -13,33 +13,30 @@
 </head>
 <body>
 
-<!-- Samma meny som hemmet.wtf. Sidans egna delar ligger som flikar under. -->
-<header class="topbar">
+<!-- Samma slags header som hemmet.wtf, med raidingsidans egen meny. Loggan leder hem till hemmet.wtf. -->
+<header class="topbar" id="topbar">
   <a class="topbar__brand" href="https://hemmet.wtf/"><img class="logo" src="assets/logo.webp" alt="">HEMMET</a>
   <div class="topbar__right">
-    <nav class="site-nav" id="siteNav" aria-label="HEMMET"><a href="https://hemmet.wtf/">Hem</a><a href="https://hemmet.wtf/levelingresan/">Levelingresan</a><a href="#start" aria-current="page">Raiding</a><a href="https://hemmet.wtf/#faq">Om oss</a></nav>
+    <nav class="site-nav" id="siteNav" aria-label="Raiding"><a href="#start" data-nav="start">Översikt</a><a href="#raidgrupper" data-nav="raidgrupper">Raidgrupper</a><a href="#roller" data-nav="roller">Roller &amp; ansvar</a></nav>
     <div id="account"></div>
     <button class="topbar__menu" type="button" aria-expanded="false" aria-controls="siteNav">Meny</button>
   </div>
 </header>
-<nav class="subnav" aria-label="Raiding">
-  <a href="#start" data-nav="start">Översikt</a><a href="#raidgrupper" data-nav="raidgrupper">Raidgrupper</a><a href="#roller" data-nav="roller">Roller<span class="wide-only"> &amp; ansvar</span></a>
-</nav>
 
-<!-- Start: konceptet. Texterna kommer från ledningens utkast (oktober 2026) och kan bytas ut. -->
 <main class="page" data-page="start">
-  <div class="hero">
-    <div class="hero__art" aria-hidden="true"></div>
-    <div class="narrow">
-      <p class="eyebrow">Raiding i HEMMET</p>
-      <h1 class="d1">Ordning i <span>hemmet</span>.</h1>
-      <p class="lede">Ett guild med många viljor, flera raidgrupper och ett gemensamt hem. Här ser du hur vi raidar, vem som ansvarar för vad och hur du hittar din grupp.</p>
-      <div class="hero__cta">
-        <a class="btn btn--primary" href="#raidgrupper">Se våra raidgrupper</a>
-        <a class="btn btn--ghost" href="#raidgrupper/soker">Öppna för signups</a>
-      </div>
+  <section class="hero" id="hero">
+    <div class="hero__art"></div><div class="hero__glow"></div><canvas id="embers"></canvas>
+    <img class="hero__sigil logo" src="assets/logo.webp" alt="">
+    <p class="hero__meta">Raiding · Alliance PvP · EU · <b>WoW Forever</b></p>
+    <h1>HEMMET</h1>
+    <p class="hero__slogan">Vi ses i raiden.</p>
+    <div class="hero__count" id="heroStats"></div>
+    <div class="btn-row">
+      <a class="btn btn--ghost" href="https://discord.gg/Gx5xQMurNy"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 4.6A18 18 0 0 0 15.6 3l-.6 1.2a16 16 0 0 0-6 0L8.4 3A18 18 0 0 0 4 4.6C1.2 8.8.4 12.9.8 17a18 18 0 0 0 5.4 2.7l1.2-1.9-1.9-.9.5-.4a12.8 12.8 0 0 0 12 0l.5.4-1.9.9 1.2 1.9A18 18 0 0 0 23.2 17c.5-4.8-.8-8.9-3.2-12.4ZM8.5 14.6c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.8 2.2-1.9 2.2Zm7 0c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.8 2.2-1.9 2.2Z"/></svg>Gå med i Discord</a>
+      <a class="btn btn--primary" href="#raidgrupper">Se raidgrupperna</a>
     </div>
-  </div>
+  </section>
+  <div class="ticker" aria-label="Veckans raids"><div class="ticker__row" id="ticker"></div></div>
 
   <section>
     <div class="wrap">
@@ -51,38 +48,6 @@
         <p><b>Så heter grupperna.</b> Bokstaven är ambitionsnivån och siffran skiljer grupper inom samma nivå åt, oftast i den ordning de skapas. <span class="gcode" style="--q:#a335ee">B2</span> är alltså den andra Focused-gruppen.</p>
         <p class="note">Gränserna mellan nivåerna är inte huggna i sten. Exakt vad de innebär utvecklar vi tillsammans efter hand. Varje Raid Master beskriver gruppens egen ambition.</p>
       </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">Vem ansvarar för vad?</p>
-      <h2 class="d2">Vem håller i <span>nycklarna</span>?</h2>
-      <p class="lede">Varje raidgrupp har en Raid Master som ansvarar för att allt runt raiden fungerar. Raid Master behöver inte göra allt själv, men ska se till att följande blir gjort.</p>
-      <div class="org org--titles" id="org"></div>
-      <div id="fnSteps"></div>
-    </div>
-  </section>
-
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">Hur hittar jag en raidgrupp?</p>
-      <h2 class="d2">Hitta ditt <span>rum</span></h2>
-      <div class="howto-panel howto-panel--plain">
-        <ol class="howto">
-          <li><span class="howto__n n">1</span><div><b>Kolla raidgrupperna.</b> Här ser du vilka grupper som finns, deras ambitionsnivå, vem som ansvarar och vilka som är öppna för signups.</div></li>
-          <li><span class="howto__n n">2</span><div><b>Läs om gruppen.</b> Klicka in på en grupp: där står vad den raidar, vilka som ansvarar, om den är öppen för signups och länken till gruppens tråd på Discord.</div></li>
-          <li><span class="howto__n n">3</span><div><b>Säg hej.</b> Hör av dig till gruppens ansvariga, direkt eller i gruppens tråd på Discord, och håll utkik efter signups via RaidHelper.</div></li>
-        </ol>
-        <div class="cta">
-          <a class="btn btn--primary" href="#raidgrupper">Se våra raidgrupper</a>
-          <a class="btn btn--ghost" href="#raidgrupper/soker">Öppna för signups</a>
-          <a class="linkish" href="#roller">Läs mer om rollerna</a>
-        </div>
-      </div>
-      <figure class="quote">
-        <blockquote>I hemmet finns det plats för både 99-parses och en raid <span>efter nattning</span>.</blockquote>
-      </figure>
     </div>
   </section>
 </main>
@@ -114,6 +79,11 @@
       <h2 class="h3" style="margin-top:56px">Ambitionsnivåer</h2>
       <p class="note">Varje grupp väljer en nivå, så vet du vad du anmäler dig till.</p>
       <div class="levels" id="ambList"></div>
+      <p class="eyebrow" style="margin-top:72px">Vem ansvarar för vad?</p>
+      <h2 class="d2">Vem håller i <span>nycklarna</span>?</h2>
+      <p class="lede">Varje raidgrupp har en Raid Master som ansvarar för att allt runt raiden fungerar. Raid Master behöver inte göra allt själv, men ska se till att följande blir gjort.</p>
+      <div class="org org--titles" id="org"></div>
+      <div id="fnSteps"></div>
     </div>
   </section>
 </main>
