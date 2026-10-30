@@ -532,7 +532,7 @@ function profileDrawer() {
   openDrawer(`<p class="eyebrow">Min profil</p><h2 class="person-name" style="--c:${CLASS_COLORS[me.class] ?? "#fff"}">${esc(me.character ?? me.discord ?? "Välkommen hem")}</h2>
     <p class="lead">${me.character ? "Så här syns du för guilden: på raidgrupperna, i organisationen och på assignment-tavlorna." : "Fyll i vad du heter i spelet och vilken klass du spelar, så syns du för guilden."}</p>
     <label class="field" style="margin-top:20px"><span>Namn i spelet</span>
-      <input id="profName" value="${esc(me.character ?? "")}" maxlength="12" autocomplete="off" spellcheck="false"></label>
+      <input id="profName" value="${esc(me.character ?? "")}" maxlength="25" placeholder="Förnamn Efternamn" autocomplete="off" spellcheck="false"></label>
     <div class="field"><span>Klass</span>
       <div class="classpick">${Object.entries(CLASS_NAMES).map(([k, n]) => `<label style="--c:${CLASS_COLORS[k]}">
         <input type="radio" name="profClass" value="${k}" ${me.class === k ? "checked" : ""}><span>${n}</span></label>`).join("")}</div>
@@ -543,14 +543,14 @@ function profileDrawer() {
 }
 
 async function saveProfileForm() {
-  const name = $("#profName").value.trim();
+  const name = $("#profName").value.trim().replace(/\s+/g, " ").replace(/(^| )\p{L}/gu, c => c.toUpperCase());
   const cls = document.querySelector('[name="profClass"]:checked')?.value;
   const box = $("#profError");
-  const err = !/^\p{L}{2,12}$/u.test(name) ? "Namnet ska vara 2-12 bokstäver, som i spelet."
+  const err = !/^\p{L}{2,12}( \p{L}{2,12})?$/u.test(name) ? "Skriv namnet som i spelet: förnamn och efternamn, 2-12 bokstäver var."
     : D.members.find(m => m.id !== me.id && m.character.toLowerCase() === name.toLowerCase()) ? `${D.members.find(m => m.id !== me.id && m.character.toLowerCase() === name.toLowerCase()).character} finns redan i guilden.`
     : !CLASS_NAMES[cls] ? "Välj en klass." : null;
   if (err) { box.textContent = err; box.hidden = false; return; }
-  try { await saveProfile(me.id, { character: name[0].toUpperCase() + name.slice(1), cls }); }
+  try { await saveProfile(me.id, { character: name, cls }); }
   catch (err) { box.textContent = saveError(err); box.hidden = false; return; }
   refresh(); route();
   accountDrawer();

@@ -70,7 +70,7 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
   Assignment-tavlan behåller sina brickor.
 - **Inloggning:** Discord via Supabase (`signIn` i data.js, PKCE så att `?code=` inte krockar med #-adresserna). Allt går att läsa utan inloggning.
   Första inloggningen skapar en medlemsrad utan namn i spelet (`handle_new_user`), och sidan öppnar profilen direkt. Medlemmen syns inte förrän profilen är ifylld.
-- **Min profil** (kontopanelen, eller sin egen personpanel): ändra namn i spelet (2–12 bokstäver, unikt) och klass. Ett nytt
+- **Min profil** (kontopanelen, eller sin egen personpanel): ändra namn i spelet (WoW Forever har för- och efternamn: ett eller två ord, 2–12 bokstäver var, unikt) och klass. Ett nytt
   namn följer med på assignment-tavlorna (triggern `rename_on_boards`, eftersom medlemmar inte får skriva på tavlorna). Bara sin egen rad, även i RLS.
 - **Fel** vid sparning visas i formuläret eller som en röd ruta nere på sidan (`showError`).
 - Okänd adress → Start. Gruppens sidor räknas till Raidgrupper i menyn.

@@ -108,6 +108,11 @@ def tests(d):
     check("egen profil med å", d.run("select character from members where id = current_member()") == [("Åsa",)])
     check("kan inte ge sig själv ledningsroll", d.denied("update members set guild_roles = '{guild_master}' where id = current_member()"))
     check("kan inte ändra någon annans namn", d.denied("update members set character = 'Hackad' where discord_id = '1'"))
+    d.run("update members set character = 'Bonk Donkus' where id = current_member()")
+    check("för- och efternamn går bra", d.run("select character from members where id = current_member()") == [("Bonk Donkus",)])
+    check("tre ord stoppas", d.denied("update members set character = 'Bonk Donkus Tre' where id = current_member()"))
+    check("dubbla mellanslag stoppas", d.denied("update members set character = 'Bonk  Donkus' where id = current_member()"))
+    check("för långt efternamn stoppas", d.denied("update members set character = 'Bonk Donkusdonkusdonkus' where id = current_member()"))
     check("felaktigt namn stoppas", d.denied("update members set character = 'x1' where id = current_member()"))
     check("upptaget namn stoppas", d.denied("update members set character = 'ledaren' where id = current_member()"))
 
@@ -147,6 +152,12 @@ def tests(d):
     check("namnet följer med på tavlan", data["roster"][0]["name"] == "Kungen")
     cell = data["raids"][0]["cells"]["Mästaren"]["c1"]
     check("hela ord i rutorna, inte delar av ord", cell == "Kungen tar MT, Mästarensson inte")
+    d.run("update members set character = 'Kung Gustaf' where id = current_member()")
+    data = d.run("select data from assignment_boards where group_id = 'g1'")[0][0]
+    check("namn med efternamn följer också med", data["roster"][0]["name"] == "Kung Gustaf")
+    d.run("update members set character = 'Kungen' where id = current_member()")
+    data = d.run("select data from assignment_boards where group_id = 'g1'")[0][0]
+    check("och tillbaka till ett namn", data["roster"][0]["name"] == "Kungen")
     check("nycklar lämnas ifred", "Mästaren" in data["raids"][0]["cells"] and "name" in data["roster"][1])
 
     print("service role")

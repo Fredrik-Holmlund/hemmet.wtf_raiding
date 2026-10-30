@@ -119,6 +119,15 @@ function wordTokens(text) {
   // compen, guildens medlemmar och manuellt inskrivna namn som står på en rad
   const known = new Set([...board.roster.map(p => low(p.name)), ...ctx.D.members.map(m => low(m.character)),
     ...board.raids.flatMap(r => rowsOf(r).map(x => low(x.player))).filter(Boolean)]);
+  // namn med efternamn innehåller mellanslag: de plockas ut först, längsta först, hela ord
+  const full = [...known].filter(n => n.includes(" ")).sort((a, b) => b.length - a.length);
+  if (full.length) {
+    const parts = String(text).split(new RegExp(`(?<![\\p{L}\\p{N}])(${full.map(reEsc).join("|")})(?![\\p{L}\\p{N}])`, "giu"));
+    if (parts.length > 1) return parts.flatMap((part, i) => i % 2 ? [{ t: "chip", player: playerInfo(part) }] : wordsOf(part, known));
+  }
+  return wordsOf(text, known);
+}
+function wordsOf(text, known) {
   return String(text).split(/(\s+)/).flatMap(tok => {
     if (!tok) return [];
     if (/^\s+$/.test(tok)) return [{ t: "sp" }];
