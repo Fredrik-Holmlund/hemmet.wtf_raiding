@@ -19,7 +19,8 @@ Det skapar tabeller, regler, roller, funktioner och ambitionsnivåer.
 3. I Supabase, under Authentication → Providers: slå på **Discord** och klistra in Client ID och Client Secret.
 4. Under Authentication → Providers: **stäng av Email** och alla andra inloggningssätt.
 5. Under Authentication → URL Configuration: sätt Site URL till `https://raiding.hemmet.wtf` och lägg till
-   `http://localhost:5174` under Redirect URLs för utveckling.
+   `http://localhost:5174/**` under Redirect URLs för utveckling, med `/**` på slutet: utan det godkänns inte adressen,
+   och inloggningen hamnar på Site URL i stället.
 
 ## 4. Koppla sidan
 
