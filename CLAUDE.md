@@ -6,8 +6,8 @@ Bygger på produktbriefen "HEMMET – Leadership & Raid Management" v1.0 (oktobe
 för roller, rolltexter och de sex funktionerna. Inspiration: lootwatch.lazsarus.com, men för guildstyrning i stället för loot.
 
 **Status (2026-10-31):** live-sidan byggs här, med Supabase och Discord-inloggning. All demo är borttagen: inga exempelmedlemmar,
-ingen demo-inloggning, ingen localStorage-data. Supabase-projektet är inte uppsatt än, så sidan säger att databasen saknas tills
-`config.js` är ifylld. raiding.hemmet.wtf är inte uppsatt än.
+ingen demo-inloggning, ingen localStorage-data. Supabase-projektet `dlpzoncjgsegjjkumomo` är uppsatt med båda migrationerna och
+Discord som enda inloggning. Discord-inloggningen är inte provad hela vägen än. raiding.hemmet.wtf är inte uppsatt än.
 
 **Läs [CONTRIBUTING.md](CONTRIBUTING.md) först: där står hur vi jobbar i repot, och reglerna gäller även AI.**
 Uppsättningen står i [docs/SETUP.md](docs/SETUP.md).
@@ -237,7 +237,7 @@ så allt går via Supabase (edge functions med service role).
 ## Idéer och nästa steg
 
 **Närmast**
-- Sätt upp Supabase-projektet och Discord-inloggningen, och testa hela flödet på riktigt (docs/SETUP.md).
+- Testa hela flödet på riktigt: inloggning, profil, första ledningen och en grupp (docs/SETUP.md).
 - Publicera på raiding.hemmet.wtf.
 - Varning när man lämnar redigeringen med osparade ändringar.
 - Skydd mot att två personer skriver över varandras ändringar på tavlan.
