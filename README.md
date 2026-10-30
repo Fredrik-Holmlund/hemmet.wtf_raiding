@@ -2,8 +2,10 @@
 
 Guildens sida för raidgrupper, roller och assignments. Ska ligga på https://raiding.hemmet.wtf.
 
-I dag är det en statisk demo med exempeldata, och nästa steg är inloggning med Discord och Supabase.
-En ögonblicksbild i visningsläge ligger på https://hemmet.wtf/raiding/.
+Sidan är statisk och pratar direkt med Supabase, med inloggning via Discord.
+
+- **Bidra:** läs [CONTRIBUTING.md](CONTRIBUTING.md). Reglerna gäller både människor och AI.
+- **Sätta upp:** [docs/SETUP.md](docs/SETUP.md)
 
 ```bash
 python serve.py      # http://localhost:5174

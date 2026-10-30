@@ -1,4 +1,4 @@
-/* Vem får ändra vad. Samma regler ska finnas som RLS-policyer i Supabase (supabase/schema.sql),
+/* Vem får ändra vad. Samma regler ska finnas som RLS-policyer i Supabase (supabase/migrations),
    så att det inte räcker att fuska i webbläsaren.
 
    Behörighet går på nivå, inte titel. Guild Master och Guild Leaders är samma nivå, "ledningen":

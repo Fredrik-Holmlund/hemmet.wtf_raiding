@@ -1,42 +1,29 @@
-# HEMMET – Ledningssidan ("Ordning i hemmet")
+# HEMMET Raiding ("Ordning i hemmet")
 
 Guildens sida för organisation och raidledning: vem som ansvarar för vad, raidgrupperna och deras bemanning,
 och en admin-del där ledningen och Raid Masters sköter grupperna. Ska ligga på https://raiding.hemmet.wtf.
 Bygger på produktbriefen "HEMMET – Leadership & Raid Management" v1.0 (oktober 2026). Briefen är källan
 för roller, rolltexter och de sex funktionerna. Inspiration: lootwatch.lazsarus.com, men för guildstyrning i stället för loot.
 
-**Status (2026-10-30):** statisk demo med exempeldata och demo-inloggning. Flyttad från `hemmet_intranet` till det här repot
-(https://github.com/Fredrik-Holmlund/hemmet.wtf_raiding, **publikt**), där live-delen med Supabase och Discord ska byggas.
-Lokal mapp: `C:\JOBB\Wow Forever\hemmet.wtf_raiding`. raiding.hemmet.wtf är inte uppsatt än.
+**Status (2026-10-31):** live-sidan byggs här, med Supabase och Discord-inloggning. All demo är borttagen: inga exempelmedlemmar,
+ingen demo-inloggning, ingen localStorage-data. Supabase-projektet är inte uppsatt än, så sidan säger att databasen saknas tills
+`config.js` är ifylld. raiding.hemmet.wtf är inte uppsatt än.
 
-## Visningsläget på hemmet.wtf/raiding (sedan 2026-10-17)
+**Läs [CONTRIBUTING.md](CONTRIBUTING.md) först: där står hur vi jobbar i repot, och reglerna gäller även AI.**
+Uppsättningen står i [docs/SETUP.md](docs/SETUP.md).
 
-En ögonblicksbild av den här sidan ligger publikt på **https://hemmet.wtf/raiding/** för att visa vad guilden erbjuder efter
-levelingresan. `C:\JOBB\Wow Forever\hemmet.wtf_leveling_plus_raiding/bygg.py` kopierar sidan från arbetskopian av det här repot (utan CLAUDE.md, README.md, serve.py,
-scripts/, supabase/, .git) och sätter `<html data-visning>`. Då gäller (`VISNING` i app.js, `loadData` i data.js):
-demo-inloggningen finns kvar så att man kan prova som ledning eller Raid Master, men **inget sparas** (varje sidladdning börjar utloggad och med exempeldatan; `persist()` och inloggningen skriver inte till localStorage),
-demoraden säger "Så här kommer raidgrupperna att se ut", loggan leder till `../` och knappen uppe till höger är *Flytta in*
-(`../#join`). Startsidan behåller den sökbara titeln från bygget. Ändringar här syns på hemmet.wtf först när sajten publiceras
-(`python "C:/JOBB/Wow Forever/Hemmet - Levelingresa/scripts/publicera_prerelease.py"`). **Allt på sidan är publikt där**:
-texterna på startsidan är ledningens utkast och ska godkännas eller bytas.
-
-**Live-delen och visningsläget hänger ihop:** `bygg.py` tar det som ligger i arbetskopian just då. När Supabase-koden kommer in
-måste `data-visning` fortsätta köra på exempeldatan utan inloggning, och halvfärdigt arbete hamnar på hemmet.wtf/raiding om
-sajten publiceras under tiden. Det är ett skäl att jobba i grenar och bygga från `main`.
+**Rör inte hemmet.wtf/raiding.** Den publika visningssidan är helt fristående från det här repot och utvecklas inte här.
 
 ## Köra lokalt
 
-Statisk sida med ES-moduler. Den behöver en server eftersom `fetch` inte fungerar från `file://`.
+Statisk sida med ES-moduler, utan byggsteg. Den behöver en server eftersom `fetch` inte fungerar från `file://`.
 
 ```bash
-python serve.py      # http://localhost:5174, utan cache
+python serve.py            # http://localhost:5174, utan cache
+python scripts/test_db.py  # migrationerna och reglerna mot en tillfällig Postgres
 ```
 
-Preview-konfigurationen heter `raiding` i `C:\JOBB\Wow Forever\.claude\launch.json` (port 5174).
-Ändringar som görs i demon sparas i webbläsarens localStorage (`hemmet-ledning-demo`, inloggad person i
-`hemmet-ledning-me`). Knappen *Återställ exempeldata* finns i inloggningspanelen.
-**Ändras exempeldatan i `data/*.json`: höj `SEED_VERSION` i `data.js`**, annars ser den som har sparade demoändringar inte det nya
-(gamla sparade ändringar slängs då automatiskt).
+Preview-konfigurationen heter `raiding` (port 5174).
 
 ## Filer
 
@@ -47,17 +34,20 @@ Preview-konfigurationen heter `raiding` i `C:\JOBB\Wow Forever\.claude\launch.js
 | `app.js` | Rendering, navigering, inloggning, redigeringsformulär, ambitionsnivåer |
 | `assignments.js` | Assignment-tavlan: visning, redigering, Raid-Helper-import, mallar |
 | `boardImage.js` | Tavlan som bild (canvas) till Discord |
-| `perms.js` | **Alla behörighetsregler på ett ställe.** Speglas som RLS i `supabase/schema.sql` |
-| `data.js` | Datalagret. Det enda som byts mot Supabase: `loadData`, `saveGroup`, `setSlot`, `removeGroup`, `restoreGroup`, `deleteGroup`, `saveBoard`, `saveTemplate`, `deleteTemplate` |
-| `data/*.json` | Exempeldata, en fil per tabell |
-| `supabase/schema.sql` | Utkast till tabeller och RLS. **Inte kört mot en riktig databas än** |
+| `perms.js` | Vilka knappar som visas. **Det som gäller sitter i databasen**, se `supabase/migrations` |
+| `config.js` | Supabase-adress och publishable-nyckel. Inga hemligheter |
+| `supabase.js` | Anslutningen. Klienten hämtas med låst version, eftersom sidan saknar byggsteg |
+| `data.js` | Datalagret: allt som läser och skriver i Supabase |
+| `data/raids.json` | Spelets raider och bossar. Inte guildens data, skrivs av `scripts/fetch_bosses.py` |
+| `supabase/migrations/` | Tabeller, regler (RLS), triggers och innehållet i roller, funktioner och nivåer |
+| `scripts/test_db.py` | Tester av migrationerna och reglerna |
 
 ## Sidan
 
-Flera sidor (hash-adresser, så att det fungerar som statisk sida). Menyn: Start · Raidgrupper · Roller & ansvar.
+Flera sidor (hash-adresser, så att det fungerar som statisk sida). Headern är densamma som på hemmet.wtf (Hem · Levelingresan · Raiding · Om oss, *Flytta in*, *Meny* på mobil). Sidans egna delar är flikar under: Översikt · Raidgrupper · Roller & ansvar.
 
 - **Start** `#start` = konceptsidan, byggd på ledningens textutkast (oktober 2026, markerat "ska bytas ut" – byt texterna i
-  `index.html` när den riktiga texten finns): hero med *Se våra raidgrupper* (ingen namnsök; borttagen 2026-10-12), *Ett hem, många sätt att raida* (A/B/C + koderna),
+  `index.html` när den riktiga texten finns): hero med egen bild (`assets/hero.webp`, tornet i solnedgången) och *Se våra raidgrupper* (ingen namnsök; borttagen 2026-10-12), *Ett hem, många sätt att raida* (A/B/C + koderna),
   *Vem håller i nycklarna?* (hierarkin med **bara titlar**, klickbara, + de sex uppgifterna med korta texter ur `functions.summary`)
   och *Hur hittar jag en raidgrupp?* (kolla grupperna, läs om gruppen på dess sida, säg hej direkt eller i gruppens Discord-tråd, RaidHelper). `#raidgrupper/soker` öppnar listan filtrerad.
 - **Raidgrupper** `#raidgrupper`: korten under rubrikerna 40-manna, 20-manna och 10-manna. Överst filter (2026-10-12): storlek,
@@ -72,13 +62,16 @@ Flera sidor (hash-adresser, så att det fungerar som statisk sida). Menyn: Start
   plats just nu, i rött `#e5533d`). Medvetet inga negativa ord som "Stängd" eller "Selektiv". Vid Öppet och Hör av dig visas vilka roller rostern
   behöver (spelets rollikoner, `assets/lfg-roles.webp`); fritexten om rostern (högst 50 ord) finns i alla lägen, t.ex. "reserver
   välkomna". Syns på kortet och som ruta på gruppens sida. **Öppet och Hör av dig räknas båda som öppna för
-  signups:** kryssrutan "Bara grupper som är öppna för signups" i filtret och `#raidgrupper/soker` (knappen "Öppna för signups") visar båda. Äldre sparad data med ja/nej räknas om (ja → Öppet, nej → Fullt hus).
+  signups:** kryssrutan "Bara grupper som är öppna för signups" i filtret och `#raidgrupper/soker` (knappen "Öppna för signups") visar båda.
   Roller och text heter fortfarande `recruit_roles`, `recruit_note` i koden. Grupperna har inga egna Discord-kanaler (beslut 2026-10-11), så det ska inte stå i texterna.
 - **Namn** visas utan kapslar: klassfärg och en prick som är **grön när personen är online på Discord**, grå annars
   (`members.online`, skrivs av Discord-boten; undantaget från "inget grönt", som "lever"-pricken på leveling-sidan).
   Assignment-tavlan behåller sina brickor.
+- **Inloggning:** Discord via Supabase (`signIn` i data.js, PKCE så att `?code=` inte krockar med #-adresserna). Allt går att läsa utan inloggning.
+  Första inloggningen skapar en medlemsrad utan namn i spelet (`handle_new_user`), och sidan öppnar profilen direkt. Medlemmen syns inte förrän profilen är ifylld.
 - **Min profil** (kontopanelen, eller sin egen personpanel): ändra namn i spelet (2–12 bokstäver, unikt) och klass. Ett nytt
-  namn följer med på assignment-tavlorna (spelarplatser, compen, namn i rutorna). Bara sin egen rad, även i RLS.
+  namn följer med på assignment-tavlorna (triggern `rename_on_boards`, eftersom medlemmar inte får skriva på tavlorna). Bara sin egen rad, även i RLS.
+- **Fel** vid sparning visas i formuläret eller som en röd ruta nere på sidan (`showError`).
 - Okänd adress → Start. Gruppens sidor räknas till Raidgrupper i menyn.
 - **Roller & ansvar** har också de fem **ambitionsnivåerna**; klick öppnar förklaringen med förväntningar och vilka grupper som har nivån.
 - **Gruppens sida** `#grupp/<id>` har flikarna *Översikt* och *Assignments*. Översikt: fakta, bemanningstabell (Raid Master och
@@ -88,7 +81,7 @@ Flera sidor (hash-adresser, så att det fungerar som statisk sida). Menyn: Start
   forumtråd, i Discords markdown (`# rubrik`, `**fet**`, `>` citat, `-#` liten text): namn och kod, storlek · nivå (🟠/🟣/🔵 i
   kvalitetsfärgen) · tid, *Vem ansvarar för vad* (alla funktioner, "Raid Master själv" när ingen är utsedd), *Detaljer* och länk
   till sidan (inte signupläget: det ändras för ofta för att stå i ett inlägg). Går att ändra i rutan innan *Kopiera*. Namn skrivs `@Namn`
-  tills `discord_id` finns; då blir de riktiga omnämnanden `<@id>` (`mention()` i app.js). Senare kan boten uppdatera
+  tills `discord_id` finns; då blir de riktiga omnämnanden `<@id>` (`mention()` i app.js; `discord_id` syns bara för inloggade). Senare kan boten uppdatera
   trådens första inlägg direkt.
 - **Assignments** `#grupp/<id>/assignments`: tavlan, se nedan.
 - **Redigera** `#grupp/<id>/redigera` och **skapa** `#ny-grupp`. Saknas behörighet visas "Låst dörr".
@@ -97,22 +90,22 @@ Flera sidor (hash-adresser, så att det fungerar som statisk sida). Menyn: Start
 ## Datamodell
 
 ```
-roles        id, level, name, short, description, responsibilities[], mandate
-functions    id, sort, name, purpose, description, deadline, tools[], holder_title?
-members      id, character, class, discord, guild_roles[]          (+ user_id, discord_id i Supabase)
-groups       id, name, size (10/20/40), raid_id (A1, B2 …), ambition (A/B/C), raid_days[], raid_start (HH:MM), schedule_note, status (active/archived),
-             blurb, details (fri text, Raid Master skriver), signup (open/ask/full), recruit_roles[] (tank/healer/dps), recruit_note (högst 50 ord), links {thread}, updated_by, updated_at
-assignments  group_id, slot, member_id
-ambitions    level (A/B/C), rank, name, tagline, color, quality (Legendary/Epic/Rare), expect {Förberedelse, Consumables, Närvaro, Uttagning}
-boards       group_id, data (tavlan, se nedan), updated_by, updated_at
-templates    id, name, description, data (tavlan utan spelare och roster), created_by, created_at
+roles                 id, level, name, short, description, responsibilities[], mandate
+functions             id, sort, name, short_name, purpose, summary, description, deadline, tools[], holder_title?
+members               id, user_id, discord_id, discord, character?, class?, guild_roles[], online, last_seen
+ambitions             level (A/B/C), rank, name, tagline, color, quality (Legendary/Epic/Rare)
+groups                id, name, size (10/20/40), raid_id (A1, B2 …), ambition, raid_days[], raid_start, schedule_note, status (active/archived),
+                      blurb, details, signup (open/ask/full), recruit_roles[], recruit_note, links {thread}, updated_by, updated_at
+assignments           group_id, slot, member_id
+assignment_boards     group_id, data (tavlan, se nedan), updated_by, updated_at
+assignment_templates  id, name, description, data (tavlan utan spelare och roster), created_by, created_at
 ```
 
 Principer, alla från briefen:
 - **En tilldelning är en rad** (grupp, slot, person), aldrig ett fält med ett enda namn. Samma person kan stå på
   flera rader, och flera personer kan dela en slot.
 - `slot` är `raid_master` eller ett funktions-id (`signups`, `roster`, `loot`, `assignments`, `leadership`, `feedback`).
-  `leadership` = Raid Leader. (`contact` för 10-manna finns inte längre; äldre sparad data räknas om till `raid_master`.)
+  `leadership` = Raid Leader.
 - **Ingen utsedd = Raid Master har det själv.** Det visas streckat ("Kanelbulle · Raid Master"), så ansvaret syns alltid.
 - **Alla raidgrupper har en Raid Master** (exakt en), även 10-manna (beslut 2026-10-12). De sex funktionerna och Raid Leader
   bemannas bara i 20- och 40-manna; 10-manna har ingen Raid Admin-bemanning. 10-mannagrupper har ambitionsnivå och kod som de andra.
@@ -122,7 +115,7 @@ Principer, alla från briefen:
 
 ## Ambitionsnivåer och gruppkoder (ledningens utkast 2026-10-12)
 
-Tre nivåer i `data/ambitions.json`: **A – Min-Max Raiding** (optimera, prestera, jaga logs), **B – Focused Raiding** (seriöst och
+Tre nivåer i tabellen `ambitions`: **A – Min-Max Raiding** (optimera, prestera, jaga logs), **B – Focused Raiding** (seriöst och
 effektivt, lite mer flexibelt), **C – Chill Raiding** (ha kul, döda bossar, umgås). Inga detaljerade förväntningar än: "exakt vad
 de innebär utvecklar vi tillsammans", och varje Raid Master beskriver gruppens egen ambition.
 **Spelets kvalitetsfärger** (2026-10-12, prickarna togs bort, de såg ut som en mobilmeny): A Legendary `#ff8000`, B Epic `#a335ee`,
@@ -131,7 +124,6 @@ från "blått = det man gör", eftersom det är spelets eget språk för nivåer
 
 **Gruppkoder:** bokstaven är nivån och siffran skiljer grupper inom samma nivå och storlek, i den ordning de skapas (A1, B2 …).
 Sätts automatiskt när gruppen sparas (`nextCode`), behålls så länge nivå och storlek är oförändrade. Sparas i `groups.raid_id`.
-Äldre demo-data med 1–5 räknas om (4–5 → A, 3 → B, 1–2 → C).
 
 ## Assignments-tavlan
 
@@ -172,6 +164,7 @@ En tavla per raidgrupp, sparad som ett JSON-dokument (`assignment_boards.data`):
   *Kopiera bild* lägger PNG i urklipp (Ctrl+V i Discord), *Ladda ner* som reserv. Urklipp kräver ett riktigt klick i Chrome/Edge;
   Claude-appens webbläsarpanel nekar urklipp helt, så kopieringen är inte verifierad där. Senare: *Skicka till Discord*
   via boten (se *Discord-boten*).
+- Tavlan sparas 300 ms efter senaste ändringen, hela dokumentet varje gång. **Redigerar två personer samtidigt vinner den som sparar sist.**
 - **Mallar** är en raid utan spelarnamn, gemensamma för guilden. *Lägg till som raid* (i Mallar eller + Raid), *Spara … som mall*.
 - Äldre sparat format (flikar med gemensamma rader) konverteras automatiskt (`migrate()` i assignments.js).
 - Från lootwatch men inte gjort än: ladda upp egna bilder per kolumn (Supabase Storage), "Även här"-närvaro (Supabase Realtime).
@@ -196,22 +189,19 @@ Att Guild Master har sista ordet är ett mandat i guilden, ingen extra knapp på
 
 Den som har en funktion i en grupp utan att vara dess Raid Master visas som **Raid Admin** (briefens begrepp).
 
-Ändras i `perms.js` **och** `supabase/schema.sql`, alltid båda.
+Reglerna sitter i `supabase/migrations`. Ändras de ska `perms.js` och `scripts/test_db.py` ändras i samma pull request.
 
-## Supabase-planen
+## Supabase
 
-- **Inloggning:** Supabase Auth med Discord som provider. Medlemmen kopplas via `discord_id`, och `user_id` fylls i vid
-  första inloggningen (edge function).
-- **Discord är källan för ledningsrollerna.** `guild_roles` skrivs bara av en Discord-synk (bot eller edge function med
-  service role). Ingen kan ge sig själv mer behörighet på sidan.
-- **Sidan/databasen är källan för raidorganisationen** (grupper, Raid Master, funktioner). Sex funktioner gånger N grupper
+- **Sidan pratar direkt med Supabase** med publishable-nyckeln. RLS avgör vad som går att läsa och ändra.
+- **Utan inloggning** syns det sidan visar. Discord-uppgifterna syns bara för inloggade, och kopplingen till kontot (`user_id`) för ingen.
+- **Discord är källan för ledningsrollerna.** `guild_roles` skrivs bara med service role: i dag för hand (docs/SETUP.md), senare av boten.
+  Ingen kan ge sig själv mer behörighet på sidan.
+- **Databasen är källan för raidorganisationen** (grupper, Raid Master, funktioner). Sex funktioner gånger N grupper
   som Discord-roller skulle bli hundratals roller.
 - **Boten speglar ut** enkla Discord-roller från sidan, till exempel "Raid Master" och "Grupp: Spiselgänget", så att
   ingen behöver uppdatera på två ställen.
-- **RLS gör jobbet:** `is_guild_lead()`, `is_raid_master(group_id)` och en trigger som stoppar Raid Masters från att
-  ändra storlek eller status och som sätter `updated_by`/`updated_at`.
-- Byte i koden: bara funktionerna i `data.js` byts mot `supabase.from(...)`, och `me` kommer från sessionen
-  i stället för demo-väljaren.
+- **Alla med ett Discord-konto kan logga in** och får en medlemsrad utan behörigheter. Kontroll mot guildens Discord-server kommer med boten.
 
 ## Discord-boten (plan, inte byggd)
 
@@ -245,14 +235,14 @@ så allt går via Supabase (edge functions med service role).
 
 ## Idéer och nästa steg
 
-**Före Supabase (demon)**
-- Hämta riktiga namn i stället för påhittade när guilden finns i spelet (WoW Forever EU-release 5 nov 2026).
+**Närmast**
+- Sätt upp Supabase-projektet och Discord-inloggningen, och testa hela flödet på riktigt (docs/SETUP.md).
+- Publicera på raiding.hemmet.wtf.
 - Varning när man lämnar redigeringen med osparade ändringar.
-- Lägga till medlemmar i demon (med Supabase kommer de från Discord-inloggningen).
+- Skydd mot att två personer skriver över varandras ändringar på tavlan.
 
 **Fas 2 – Supabase och Discord**
-- Kör och testa `schema.sql`. Seeda roles/functions från `data/*.json`.
-- Discord OAuth, koppla medlem ↔ konto, Discord-synk för GM/GL.
+- Discord-synk för GM/GL.
 - Discord-boten: rollsynk, spegling, online-status och publicering av assignments (se *Discord-boten* ovan).
 - Slash-kommandon i boten som skriver till samma databas, t.ex. `/raid assign loot @person`.
   Discord blir ett gränssnitt mot datan, inte en egen kopia.
@@ -273,7 +263,7 @@ så allt går via Supabase (edge functions med service role).
 Från briefen:
 - Hur Raid Masters utses och ersätts.
 - Vem som får skapa nya raidgrupper (just nu: ledningen).
-- Hur ambitionsnivåer definieras (just nu förslaget 1–5 ovan).
+- Hur ambitionsnivåer definieras (just nu utkastet A/B/C ovan).
 - Prioriteringsregler för rosteruttagning.
 - Konflikter mellan raidgrupper.
 - Regler för Soft Reserve och loot.
@@ -282,7 +272,7 @@ Från briefen:
 
 Uppkomna under arbetet:
 - Får en Raid Master själv lämna över gruppen till någon annan, eller alltid via ledningen? (Just nu: via ledningen.)
-- Ska sidan vara öppen för alla eller kräva Discord-inloggning för att läsa? (Schemat tillåter just nu läsning utan inloggning.)
+- Ska sidan vara öppen för alla eller kräva Discord-inloggning för att läsa? (Just nu öppen, så namn i spelet och assignment-tavlorna är publika.)
 - Discord: ska boten få pinga spelarna när den postar assignments? Ska den skapa gruppens forumtråd själv när en grupp skapas?
 
 ## Formspråk och ton
@@ -306,6 +296,6 @@ Tillägg för ledningssidan (beslut 2026-10-12):
 
 ## Arbetssätt
 
+- Reglerna står i [CONTRIBUTING.md](CONTRIBUTING.md): gren och pull request, migrationer, hemligheter och AI.
 - Svenska i texter och kommentarer.
 - Verifiera i webbläsaren efter ändringar. Webbläsarpanelen ritar ibland inte efter scroll; dölj det ovanför med JS för att ta skärmdump.
-- Redigera aldrig direkt i `hemmet_prerelease` (publiceras via leveling-projektets skript).

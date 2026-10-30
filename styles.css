@@ -62,7 +62,7 @@ section + section { border-top: 1px solid var(--line); }
 .hero { position: relative; isolation: isolate; overflow: hidden; padding: clamp(70px, 10vw, 130px) 0 clamp(56px, 7vw, 90px); text-align: center; }
 .hero .eyebrow { justify-content: center; }
 .hero .lede { margin-inline: auto; }
-/* Molten Core: guildens första raid (samma bild som Raiding-kortet på hemmet.wtf). Elwynns karta finns kvar som hero-elwynn-karta.webp */
+/* raidingsidans egen bild: tornet i solnedgången. Mörkas så att texten går att läsa mot den ljusa solen. */
 .hero__art { position: absolute; inset: 0; z-index: -1; background: url("assets/hero.webp") center 55% / cover; filter: grayscale(.1) brightness(.72) contrast(1.05); opacity: .8;
   -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, #000 20%, transparent 75%); }
 
@@ -220,8 +220,6 @@ footer { display: flex; justify-content: center; padding: 40px 16px 56px; border
 .foot__brand .logo { height: 46px; width: auto; }
 .foot__brand b { display: block; font: 700 18px/1.2 var(--font-display); letter-spacing: .14em; color: var(--text-primary); }
 .foot__brand small { font-size: 13px; color: var(--text-muted); }
-.stamp { position: fixed; left: 12px; bottom: 12px; z-index: 20; padding: 6px 10px; border-radius: 4px; background: rgba(10, 16, 32, .85); border: 1px solid var(--line-strong);
-  font: 400 12px/1 var(--font-ui); letter-spacing: var(--cap); text-transform: uppercase; color: var(--text-muted); pointer-events: none; }
 
 /* ========== INLOGGNING OCH REDIGERING ========== */
 .topbar__right { display: flex; align-items: center; gap: 22px; min-width: 0; }
@@ -1023,17 +1021,6 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .fchip .fchip__role.role--healer { background-position: -18px 0; }
 .fchip .fchip__role.role--dps { background-position: -36px 0; }
 
-/* förhandsvisningen ska synas: band överst (scrollar bort) och en tydlig stämpel nere till vänster */
-.demobar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; padding: 10px 16px;
-  background: linear-gradient(180deg, #3a2410, #24160a); border-bottom: 1px solid #cd8a4e; box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .6);
-  color: #f4ede4; font-size: 14px; text-align: center; text-shadow: 0 1px 2px #000; }
-.demobar__tag { padding: 3px 9px; border-radius: 3px; background: #cd8a4e; color: #1a0f06; font: 700 11px/1.2 var(--font-body);
-  letter-spacing: .12em; text-transform: uppercase; text-shadow: none; }
-.demobar__btn { padding: 0; background: none; border: 0; color: var(--gold-300); font: inherit; font-weight: 600; text-decoration: underline;
-  text-underline-offset: 3px; cursor: pointer; }
-.demobar__btn:hover { color: #fff; }
-.stamp { border-color: #cd8a4e !important; color: #f4ede4 !important; background: rgba(36, 22, 10, .92) !important; font-size: 13px !important; }
-.stamp b { color: #cd8a4e; letter-spacing: .08em; text-transform: uppercase; }
 
 /* ========== Visningsläget på hemmet.wtf/raiding: sajtens gemensamma meny + raidingsidans flikar ========== */
 /* den valda sidan: EN guldlinje som åker mellan menyvalen (slideBar i app.js): till det man hovrar, tillbaka till det valda,
@@ -1060,3 +1047,17 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
   .topbar .site-nav a[aria-current] { color: var(--gold-300); }
   .subnav { justify-content: flex-start; }
 }
+
+/* konto och fel */
+.account__out { display: inline-flex; align-items: center; gap: 8px; }
+.toast { position: fixed; left: 50%; bottom: 20px; z-index: 90; transform: translateX(-50%); max-width: min(520px, calc(100vw - 32px)); padding: 11px 16px; border-radius: 6px;
+  border: 1px solid #000; box-shadow: inset 0 0 0 1px #e5533d, 0 12px 30px -12px #000; background: rgba(36, 14, 10, .96); color: var(--text-primary); font-size: 14px; }
+
+/* heron: hela bilden syns, tonas ner i sidan nedtill, och texten får en mjuk mörk bakgrund mot solen */
+.hero { padding-block: clamp(90px, 13vw, 170px) clamp(80px, 10vw, 130px); }
+.hero__art { background-position: center 70%; filter: none; opacity: 1;
+  -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent); mask-image: linear-gradient(180deg, #000 72%, transparent); }
+.hero__art::after { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 62% 70% at 50% 48%, rgba(8, 6, 14, .72), rgba(8, 6, 14, .28) 70%, rgba(8, 6, 14, .12)); }
+.hero .lede { color: var(--text-primary); text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+.hero .d1, .hero .eyebrow { text-shadow: 0 2px 10px rgba(0, 0, 0, .7); }

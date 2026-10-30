@@ -1,137 +1,135 @@
-/* Datalagret. I demon: exempeldatan i data/*.json, och det man ändrar sparas i webbläsaren (localStorage).
-   Med Supabase byts funktionerna här mot anrop, med samma namn och samma kolumner:
-     loadData()                     → select * från varje tabell
-     saveGroup(g, me)               → upsert into groups
-     setSlot(groupId, slot, ids)    → delete + insert i assignments för (group_id, slot)
-     removeGroup / restoreGroup     → update groups set status = 'archived' / 'active'
-     deleteGroup(id)                → delete from groups (assignments följer med via on delete cascade)
-     saveBoard(groupId, board, me)  → upsert into assignment_boards
-     saveTemplate(t, me)            → insert into assignment_templates
-     deleteTemplate(id)             → delete from assignment_templates
-     saveProfile(id, { character, class }) → update members (bara sin egen rad, se RLS)
-   Behörigheterna kontrolleras av databasen (RLS), inte bara av sidan.
+/* Datalagret: allt som läser och skriver i Supabase. Tabeller och regler finns i supabase/migrations.
+   Behörigheterna kontrolleras av databasen (RLS). perms.js avgör bara vilka knappar som visas.
 
-   Tabellerna
-   roles        id, level, name, short, description, responsibilities[], mandate        – guildens formella roller
-   functions    id, sort, name, purpose, description, deadline, tools[], holder_title?    – de sex obligatoriska funktionerna
-   members      id, character, class, discord, guild_roles[], online   – guild_master / guild_leader; online från Discord-boten
-   groups       id, name, size, raid_id, ambition, raid_days[] (mon–sun), raid_start (HH:MM), schedule_note, status, blurb, details, signup (open/ask/full), recruit_roles[], recruit_note, links, updated_by, updated_at
-   assignments  group_id, slot, member_id   – slot = "raid_master", ett funktions-id eller "contact" (10-manna)
-                en rad per person: samma person kan stå på flera rader, flera personer på samma slot
-   ambitions    level (1–5), name, tagline, expect { rubrik: text }
-   boards       group_id, data, updated_by, updated_at   – assignment-tavlan, se assignments.js
-   templates    id, name, description, data (en raid utan spelare), created_by, created_at   – guildens mallar
-   raids        id, name, size, columns [{ name, image }]   – förvalda raider med bossarna, från scripts/fetch_bosses.py */
+   data/raids.json är inte guildens data utan spelets: raiderna och bossarna, från scripts/fetch_bosses.py. */
+import { sb, configured } from "./supabase.js";
 
-const TABLES = ["roles", "functions", "members", "groups", "assignments", "ambitions", "boards", "templates", "raids"];
-const KEY = "hemmet-ledning-demo";
-const EDITABLE = ["groups", "assignments", "boards", "templates", "members"];   // resten hämtas alltid färskt från filerna
-// höj när exempeldatan i data/*.json ändras: äldre sparade demoändringar slängs då, annars syns inte det nya
-const SEED_VERSION = 4;
+export { configured };
+
+// Utan inloggning får man bara läsa de här kolumnerna (se migrationen), så de måste namnges.
+const MEMBER_PUBLIC = "id, character, class, guild_roles, online";
+const MEMBER_LOGGED_IN = `${MEMBER_PUBLIC}, discord, discord_id, last_seen`;
+const GROUP_COLUMNS = ["name", "size", "raid_id", "ambition", "raid_days", "raid_start", "schedule_note", "blurb", "details",
+  "signup", "recruit_roles", "recruit_note", "status", "links"];
 
 let db = null;
+let onError = console.error;
+export const setErrorHandler = fn => { onError = fn; };   // fel som händer efter att sidan har gått vidare (tavlans autospar)
 
-function persist() {
-  if (document.documentElement.hasAttribute("data-visning")) return;   // visningsläget: ändringarna lever bara i sidvisningen
-  try { localStorage.setItem(KEY, JSON.stringify({ seed: SEED_VERSION, ...Object.fromEntries(EDITABLE.map(t => [t, db[t]])) })); } catch { /* privat läge: ändringarna lever bara tills sidan laddas om */ }
-}
+const ok = ({ data, error }) => {
+  if (error) throw new Error(error.message);
+  return data;
+};
+const toTime = t => t ? t.slice(0, 5) : t;   // databasen svarar 19:30:00, sidan använder 19:30
+const groupRow = g => ({ ...g, raid_start: toTime(g.raid_start) });
+const pick = (obj, keys) => Object.fromEntries(keys.map(k => [k, obj[k]]));
 
-export async function loadData() {
-  const rows = await Promise.all(TABLES.map(t => fetch(`data/${t}.json`).then(r => {
-    if (!r.ok) throw new Error(`data/${t}.json: ${r.status}`);
-    return r.json();
-  })));
-  db = Object.fromEntries(TABLES.map((t, i) => [t, rows[i]]));
-  if (document.documentElement.hasAttribute("data-visning")) return db;   // visningsläget: alltid exempeldatan
-  try {
-    const saved = JSON.parse(localStorage.getItem(KEY) ?? "null");
-    if (saved?.seed === SEED_VERSION) EDITABLE.forEach(t => Array.isArray(saved[t]) && (db[t] = saved[t]));
-    else if (saved) localStorage.removeItem(KEY);
-  } catch { /* trasig eller blockerad lagring: kör på exempeldatan */ }
+/* ---------- inloggning ---------- */
+export const getSession = async () => ok(await sb.auth.getSession()).session;
+export const currentMemberId = async () => ok(await sb.rpc("current_member"));
+export const signIn = async () => ok(await sb.auth.signInWithOAuth({
+  provider: "discord", options: { redirectTo: `${location.origin}${location.pathname}` },
+}));
+export const signOut = async () => { const { error } = await sb.auth.signOut(); if (error) throw new Error(error.message); };
+
+/* ---------- läsa ---------- */
+export async function loadData(session) {
+  const [roles, functions, ambitions, members, groups, assignments, boards, templates, raids] = await Promise.all([
+    sb.from("roles").select("*").order("level").then(ok),
+    sb.from("functions").select("*").order("sort").then(ok),
+    sb.from("ambitions").select("*").order("rank", { ascending: false }).then(ok),
+    sb.from("members").select(session ? MEMBER_LOGGED_IN : MEMBER_PUBLIC).then(ok),
+    sb.from("groups").select("*").then(ok),
+    sb.from("assignments").select("*").then(ok),
+    sb.from("assignment_boards").select("*").then(ok),
+    sb.from("assignment_templates").select("*").order("created_at").then(ok),
+    fetch("data/raids.json").then(r => {
+      if (!r.ok) throw new Error(`data/raids.json: ${r.status}`);
+      return r.json();
+    }),
+  ]);
+  db = { roles, functions, ambitions, members, groups: groups.map(groupRow), assignments, boards, templates, raids };
   return db;
 }
 
+/* ---------- grupper ---------- */
 const slugify = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "grupp";
 
-export function saveGroup(g, me) {
-  const row = { ...g, updated_by: me?.id ?? null, updated_at: new Date().toISOString() };
-  if (!row.id) {
+export async function saveGroup(g) {
+  const row = pick(g, GROUP_COLUMNS);
+  let saved;
+  if (!g.id) {
     let id = slugify(row.name), n = 2;
     while (db.groups.some(x => x.id === id)) id = `${slugify(row.name)}-${n++}`;
-    row.id = id;
-    db.groups.push(row);
+    saved = groupRow(ok(await sb.from("groups").insert({ ...row, id }).select().single()));
+    db.groups.push(saved);
   } else {
-    const i = db.groups.findIndex(x => x.id === row.id);
-    if (i < 0) db.groups.push(row); else db.groups[i] = row;
+    saved = groupRow(ok(await sb.from("groups").update(row).eq("id", g.id).select().single()));
+    db.groups[db.groups.findIndex(x => x.id === g.id)] = saved;
   }
-  persist();
-  return row;
+  return saved;
 }
 
-export function setSlot(groupId, slot, memberIds) {
+// bara skillnaden skrivs: bort först, eftersom en grupp bara får ha en Raid Master åt gången
+export async function setSlot(groupId, slot, memberIds) {
+  const now = db.assignments.filter(a => a.group_id === groupId && a.slot === slot).map(a => a.member_id);
+  const wanted = [...new Set(memberIds)];
+  const remove = now.filter(id => !wanted.includes(id));
+  const add = wanted.filter(id => !now.includes(id));
+  if (remove.length) ok(await sb.from("assignments").delete().match({ group_id: groupId, slot }).in("member_id", remove));
+  if (add.length) ok(await sb.from("assignments").insert(add.map(member_id => ({ group_id: groupId, slot, member_id }))));
   db.assignments = db.assignments.filter(a => !(a.group_id === groupId && a.slot === slot))
-    .concat([...new Set(memberIds)].map(member_id => ({ group_id: groupId, slot, member_id })));
-  persist();
+    .concat(wanted.map(member_id => ({ group_id: groupId, slot, member_id })));
 }
 
-function setStatus(id, status, me) {
-  const g = db.groups.find(x => x.id === id);
-  if (g) saveGroup({ ...g, status }, me);
-}
-export const removeGroup = (id, me) => setStatus(id, "archived", me);
-export const restoreGroup = (id, me) => setStatus(id, "active", me);
+const setStatus = (id, status) => saveGroup({ ...db.groups.find(x => x.id === id), status });
+export const removeGroup = id => setStatus(id, "archived");
+export const restoreGroup = id => setStatus(id, "active");
 
-export function deleteGroup(id) {
+export async function deleteGroup(id) {
+  ok(await sb.from("groups").delete().eq("id", id));
   db.groups = db.groups.filter(g => g.id !== id);
   db.assignments = db.assignments.filter(a => a.group_id !== id);
-  persist();
+  db.boards = db.boards.filter(b => b.group_id !== id);
 }
 
-export function resetDemo() {
-  try { localStorage.removeItem(KEY); } catch { /* inget att rensa */ }
-}
+/* ---------- assignments ----------
+   Tavlan ändras direkt på sidan och sparas strax efter, så att snabba klick blir en skrivning.
+   Hela tavlan skrivs varje gång: redigerar två personer samtidigt vinner den som sparar sist. */
+const pending = new Map();
 
-/* ---------- assignments ---------- */
-export function saveBoard(groupId, data, me) {
-  const row = { group_id: groupId, data: structuredClone(data), updated_by: me?.id ?? null, updated_at: new Date().toISOString() };
+export function saveBoard(groupId, data) {
+  const row = { group_id: groupId, data: structuredClone(data) };
   const i = db.boards.findIndex(b => b.group_id === groupId);
-  if (i < 0) db.boards.push(row); else db.boards[i] = row;   // samma array: uppslagen i app.js ser ändringen direkt
-  persist();
+  if (i < 0) db.boards.push(row); else db.boards[i] = { ...db.boards[i], ...row };   // samma array: uppslagen i app.js ser ändringen direkt
+  clearTimeout(pending.get(groupId));
+  pending.set(groupId, setTimeout(async () => {
+    pending.delete(groupId);
+    try { ok(await sb.from("assignment_boards").upsert(row)); }
+    catch (err) { onError(err); }
+  }, 300));
   return row;
 }
 
-export function saveTemplate(t, me) {
-  const row = { ...t, id: `tpl-${Date.now().toString(36)}`, created_by: me?.id ?? null, created_at: new Date().toISOString() };
+export async function saveTemplate(t) {
+  const row = ok(await sb.from("assignment_templates").insert(pick(t, ["name", "description", "data"])).select().single());
   db.templates.push(row);
-  persist();
   return row;
 }
 
-export function deleteTemplate(id) {
+export async function deleteTemplate(id) {
+  ok(await sb.from("assignment_templates").delete().eq("id", id));
   const i = db.templates.findIndex(t => t.id === id);
   if (i >= 0) db.templates.splice(i, 1);
-  persist();
 }
 
 /* ---------- egen profil ----------
-   Byter man namn följer det med på assignment-tavlorna: spelarplatser, compen och namn i rutorna. */
-export function saveProfile(id, { character, cls }) {
+   Byter man namn uppdaterar databasen tavlorna (rename_on_boards), så de läses om här. */
+export async function saveProfile(id, { character, cls }) {
+  ok(await sb.from("members").update({ character, class: cls }).eq("id", id));
   const m = db.members.find(x => x.id === id);
-  if (!m) return null;
-  const old = m.character;
-  m.character = character;
-  m.class = cls;
-  if (old.toLowerCase() !== character.toLowerCase()) {
-    const same = n => String(n ?? "").toLowerCase() === old.toLowerCase();
-    const re = new RegExp(`(?<![\\p{L}\\p{N}])${old.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "giu");
-    for (const b of db.boards) {
-      (b.data.roster ?? []).forEach(p => { if (same(p.name)) p.name = character; });
-      (b.data.raids ?? []).forEach(r => {
-        r.sections.forEach(s => s.rows.forEach(row => { if (same(row.player)) row.player = character; }));
-        Object.values(r.cells).forEach(cells => Object.keys(cells).forEach(k => { cells[k] = cells[k].replace(re, character); }));
-      });
-    }
-  }
-  persist();
+  const renamed = m.character !== character;
+  Object.assign(m, { character, class: cls });
+  if (renamed) db.boards.splice(0, db.boards.length, ...ok(await sb.from("assignment_boards").select("*")));
   return m;
 }
