@@ -1,4 +1,4 @@
-import { configured, getSession, currentMemberId, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
+import { configured, getSession, currentMemberId, syncRoles, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
 import { can, isLeadership } from "./perms.js";
 import { renderAssignments, drawBoard, bindAssignments } from "./assignments.js";
 import { embers } from "./embers.js";
@@ -944,6 +944,7 @@ async function start() {
   if (!configured) return showDown("Sidan är inte kopplad till databasen än.");
   setErrorHandler(showError);
   session = await getSession();
+  if (session) await syncRoles();
   RAW = await loadData(session);
   D = index(RAW);
   if (session) me = D.member[await currentMemberId()] ?? null;

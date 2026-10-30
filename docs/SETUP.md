@@ -33,16 +33,25 @@ python serve.py      # http://localhost:5174
 
 ## 5. Första ledningen
 
-Logga in en gång med Discord och fyll i din profil. Ingen kan ge sig själv ledningsroller på sidan, så de första sätts i
-SQL Editor:
+Rollerna **Guild Master** och **Guild Leader** på Discord-servern ger ledningens behörighet på sidan. Ingen kan ge sig själv
+roller på sidan: `supabase/functions/sync-discord-roles` frågar Discord med en bot.
 
-```sql
-update members set guild_roles = '{guild_master}' where character = 'DittNamn';
-update members set guild_roles = '{guild_leader}' where character in ('Namn1', 'Namn2');
-```
+1. **Boten:** i Discord Developer Portal, samma applikation som inloggningen: gå till Bot och skapa eller återställ token.
+   Inga privilegierade intents behövs.
+2. **Bjud in den:** under OAuth2 → URL Generator, välj scope `bot` och inga behörigheter. Öppna länken och välj servern.
+3. **Hemligheter:** i Supabase under Edge Functions → Secrets, lägg till:
+   - `DISCORD_BOT_TOKEN`: botens token
+   - `DISCORD_GUILD_ID`: serverns id
+   - `CRON_SECRET`: ett långt slumpat lösenord som du hittar på
+4. **Funktionen:** under Edge Functions → Deploy a new function → Via Editor: döp den till `sync-discord-roles`, klistra in
+   `index.ts` och stäng av **Verify JWT** (funktionen kontrollerar inloggningen själv).
+5. **Schemat:** under Integrations → Cron, skapa ett jobb var 15:e minut som anropar funktionen med POST och headern
+   `x-cron-secret` med samma värde som `CRON_SECRET`. Då slutar en borttagen roll gälla även för den som inte öppnar sidan.
 
-Kontrollera med `select character, discord, guild_roles from members;` att rätt personer fick rollen. När Discord-boten finns
-sätter den rollerna i stället.
+Rollerna hämtas vid varje sidladdning för den som är inloggad. Svarar inte Discord behåller alla sina roller, och hittas inte
+rollnamnen på servern ändras ingenting.
+
+Kontrollera med `select character, discord, guild_roles from members;` att rätt personer fick rollen.
 
 ## 6. Publicera på raiding.hemmet.wtf
 

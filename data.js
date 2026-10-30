@@ -32,6 +32,13 @@ export const signIn = async () => ok(await sb.auth.signInWithOAuth({
 }));
 export const signOut = async () => { const { error } = await sb.auth.signOut(); if (error) throw new Error(error.message); };
 
+// Ledningsrollerna läses från Discord av en edge function, aldrig av webbläsaren. Går det inte fortsätter sidan med de roller som finns.
+export async function syncRoles() {
+  const timeout = new Promise(resolve => setTimeout(resolve, 3000));
+  try { await Promise.race([sb.functions.invoke("sync-discord-roles"), timeout]); }
+  catch (err) { console.warn(err); }
+}
+
 /* ---------- läsa ---------- */
 export async function loadData(session) {
   const [roles, functions, ambitions, members, groups, assignments, boards, templates, raids] = await Promise.all([

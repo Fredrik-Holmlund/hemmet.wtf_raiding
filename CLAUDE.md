@@ -196,8 +196,10 @@ Reglerna sitter i `supabase/migrations`. Ändras de ska `perms.js` och `scripts/
 
 - **Sidan pratar direkt med Supabase** med publishable-nyckeln. RLS avgör vad som går att läsa och ändra.
 - **Utan inloggning** syns det sidan visar. Discord-uppgifterna syns bara för inloggade, och kopplingen till kontot (`user_id`) för ingen.
-- **Discord är källan för ledningsrollerna.** `guild_roles` skrivs bara med service role: i dag för hand (docs/SETUP.md), senare av boten.
-  Ingen kan ge sig själv mer behörighet på sidan.
+- **Discord är källan för ledningsrollerna.** Rollerna *Guild Master* och *Guild Leader* på servern blir `guild_master`/`guild_leader`
+  (samma nivå, ledningen). Edge function `sync-discord-roles` skriver `guild_roles` med service role: vid varje sidladdning för den inloggade
+  och var 15:e minut för alla (Supabase Cron), så att en borttagen roll slutar gälla. Svarar inte Discord ändras inget.
+  Ingen kan ge sig själv mer behörighet på sidan, och roller satta för hand skrivs över.
 - **Databasen är källan för raidorganisationen** (grupper, Raid Master, funktioner). Sex funktioner gånger N grupper
   som Discord-roller skulle bli hundratals roller.
 - **Boten speglar ut** enkla Discord-roller från sidan, till exempel "Raid Master" och "Grupp: Spiselgänget", så att
@@ -210,7 +212,7 @@ En enda bot för allt som rör Discord. Den kräver backend: bot-token är hemli
 så allt går via Supabase (edge functions med service role).
 
 **Vad boten gör**
-1. **Synkar ledningsrollerna** från Discord till `members.guild_roles` (GM/GL). Ingen kan ge sig själv behörighet på sidan.
+1. **Synkar ledningsrollerna** från Discord till `members.guild_roles` (GM/GL): görs redan av edge function `sync-discord-roles`.
 2. **Speglar ut** enkla roller från sidan till Discord, t.ex. "Raid Master" och "Grupp: Spiselgänget".
 3. **Online-status:** skriver `members.online`/`last_seen` från Discords presence (gröna/grå pricken vid namnen).
 4. **Publicerar assignment-bilden** direkt i Discord, så att det inte blir kopiera/klistra in (se nedan).
@@ -243,7 +245,6 @@ så allt går via Supabase (edge functions med service role).
 - Skydd mot att två personer skriver över varandras ändringar på tavlan.
 
 **Fas 2 – Supabase och Discord**
-- Discord-synk för GM/GL.
 - Discord-boten: rollsynk, spegling, online-status och publicering av assignments (se *Discord-boten* ovan).
 - Slash-kommandon i boten som skriver till samma databas, t.ex. `/raid assign loot @person`.
   Discord blir ett gränssnitt mot datan, inte en egen kopia.
