@@ -283,7 +283,7 @@ function renderGroups() {
       ${gs.map(groupListRow).join("")}
     </section>`;
   }).join("");
-  $("#groups").innerHTML = sections ? `<div class="ghead" aria-hidden="true"><span></span><span>Grupp</span><span>Raid Master</span><span>Tid</span><span>Signups</span></div>${sections}`
+  $("#groups").innerHTML = sections ? `<div class="glist"><div class="ghead" aria-hidden="true"><span></span><span>Grupp</span><span>Raid Master</span><span>Tid</span><span>Signups</span></div>${sections}</div>`
     : `<p class="note">${filterActive() ? "Ingen grupp matchar filtren. Prova att rensa något, eller fråga i Discord: det brukar finnas plats." : "Inga raidgrupper än."}</p>`;
 
   // borttagna grupper syns bara för ledningen, som kan ångra eller radera för gott
