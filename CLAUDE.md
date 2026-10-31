@@ -7,7 +7,7 @@ för roller, rolltexter och de sex funktionerna. Inspiration: lootwatch.lazsarus
 
 **Status (2026-10-31):** live-sidan byggs här, med Supabase och Discord-inloggning. All demo är borttagen: inga exempelmedlemmar,
 ingen demo-inloggning, ingen localStorage-data. Supabase-projektet `dlpzoncjgsegjjkumomo` är uppsatt med båda migrationerna och
-Discord som enda inloggning. Inloggning, profil och rollhämtning från Discord (`sync-discord-roles`, boten) fungerar på riktigt. Schemat var 15:e minut (Cron) och att skapa grupper mot riktig databas är inte provat än. raiding.hemmet.wtf är inte uppsatt än.
+Discord som enda inloggning. Inloggning, profil och rollhämtning från Discord (`sync-discord-roles`, boten) fungerar på riktigt. Schemat var 15:e minut (Cron) och att skapa grupper mot riktig databas är inte provat än. Sidan ligger live på https://raiding.hemmet.wtf (GitHub Pages från `main`).
 
 **Läs [CONTRIBUTING.md](CONTRIBUTING.md) först: där står hur vi jobbar i repot, och reglerna gäller även AI.**
 Uppsättningen står i [docs/SETUP.md](docs/SETUP.md).
@@ -240,7 +240,6 @@ så allt går via Supabase (edge functions med service role).
 
 **Närmast**
 - Sätt upp Cron för `sync-discord-roles` och testa att skapa en grupp och en tavla på riktigt.
-- Publicera på raiding.hemmet.wtf.
 - Varning när man lämnar redigeringen med osparade ändringar.
 - Skydd mot att två personer skriver över varandras ändringar på tavlan.
 

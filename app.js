@@ -120,9 +120,10 @@ const qm = roleId => `<span class="qm" role="button" tabindex="0" data-role="${r
 const DAY_NAMES = { mon: "Måndag", tue: "Tisdag", wed: "Onsdag", thu: "Torsdag", fri: "Fredag", sat: "Lördag", sun: "Söndag" };
 function renderHero() {
   const groups = activeGroups();
+  const open = groups.filter(hasRoom).length;
   const stat = (n, label) => `<div><b>${n}</b><span>${label}</span></div>`;
   $("#heroStats").innerHTML = stat(groups.length, groups.length === 1 ? "raidgrupp" : "raidgrupper")
-    + stat(groups.filter(hasRoom).length, "öppna för signups") + stat(D.members.length, "i hemmet");
+    + stat(open, open === 1 ? "öppen för signups" : "öppna för signups") + stat(D.members.length, "i hemmet");
   const raids = day => groups.filter(g => g.raid_days?.includes(day)).length;
   const days = DAYS.map(([k]) => [k, raids(k)]).filter(([, n]) => n);
   const week = days.reduce((sum, [, n]) => sum + n, 0);
