@@ -25,13 +25,7 @@ const rgba = (hex, a) => {
   const n = parseInt(h, 16);
   return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
 };
-const textOn = hex => {
-  let h = String(hex || "#c9bfb5").replace("#", "");
-  if (h.length === 3) h = h.split("").map(x => x + x).join("");
-  const n = parseInt(h, 16);
-  const [r, gr, b] = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
-  return .2126 * r + .7152 * gr + .0722 * b > .18 ? "#0b0f1a" : "#ffffff";
-};
+const ON_COLOR = "rgba(0,0,0,.72)";   // spelarnamn på klassfärgen, samma som på sidan
 const loadImg = src => new Promise(res => {
   if (!src) return res(null);
   const i = new Image();
@@ -155,7 +149,7 @@ export async function boardImage({ title, subtitle, columns, sections, tokens, f
     g.beginPath(); g.roundRect(x, y - 10, w, 20, solid ? 4 : 10);
     if (solid) {
       g.fillStyle = color; g.fill();
-      font(`700 13px ${F.body}`); g.fillStyle = textOn(color); g.fillText(name, x + 8, y + .5);
+      font(`700 13px ${F.body}`); g.fillStyle = ON_COLOR; g.fillText(name, x + 8, y + .5);
       return w;
     }
     g.fillStyle = rgba(color, .13); g.fill();
@@ -192,7 +186,7 @@ export async function boardImage({ title, subtitle, columns, sections, tokens, f
       g.fillText(r.role, PAD + 10, mid);
       if (r.player) {   // hela cellen i klassfärgen, som på sidan
         g.fillStyle = r.player.color; g.fillRect(PAD + ROLE_W, y, PLAYER_W, r.h - 1);
-        font(`700 13px ${F.body}`); g.fillStyle = textOn(r.player.color); g.fillText(r.player.name, PAD + ROLE_W + 10, mid + .5);
+        font(`700 13px ${F.body}`); g.fillStyle = ON_COLOR; g.fillText(r.player.name, PAD + ROLE_W + 10, mid + .5);
       }
       else { g.fillStyle = C.faint; g.fillText("-", PAD + ROLE_W + 10, mid); }
       r.cells.forEach((lines, i) => {
