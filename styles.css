@@ -1016,8 +1016,8 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 /* Fullt hus i rött (beslut 2026-10-14) */
 .signup--full { color: #e5533d; font-weight: 600; }
 /* rollikonerna i filtret */
-.fchip { display: inline-flex; align-items: center; gap: 6px; }
-.fchip .fchip__role { width: 18px; height: 18px; background-size: 54px 18px; }
+.fchip { display: inline-flex; align-items: center; }
+.fchip .fchip__role { width: 18px; height: 18px; margin-right: 6px; background-size: 54px 18px; }
 .fchip .fchip__role.role--healer { background-position: -18px 0; }
 .fchip .fchip__role.role--dps { background-position: -36px 0; }
 

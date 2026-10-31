@@ -263,7 +263,7 @@ function renderGroups() {
       ${note ? `<p class="note gsec__note">${note}</p>` : ""}
       <div class="gcards">
         ${gs.map(groupCard).join("")}
-        ${create ? `<a class="gcard gcard--new" href="#ny-grupp/${size}"><span class="gcard__plus">+</span><span class="gcard__name">Ny ${size}-mannagrupp</span>
+        ${create ? `<a class="gcard gcard--new" href="#ny-grupp/${size}"><span class="gcard__plus">+</span><span class="gcard__name">Ny ${NUM(size)}-mannagrupp</span>
           <span class="gcard__meta">Starta en grupp och utse Raid Master</span></a>` : ""}
       </div>
     </section>`;
