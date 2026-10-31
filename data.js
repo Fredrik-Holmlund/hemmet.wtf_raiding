@@ -51,6 +51,19 @@ export async function syncThread(groupId, content) {
   return data.url;
 }
 
+// Bilden av tavlan till gruppens tråd. Funktionen kontrollerar behörigheten.
+export async function postAssignments(groupId, blob) {
+  const form = new FormData();
+  form.append("group_id", groupId);
+  form.append("file", blob, "assignments.png");
+  const { data, error } = await sb.functions.invoke("post-assignments", { body: form });
+  if (error) {
+    const body = await error.context?.json?.().catch(() => null);
+    throw new Error(body?.error ?? error.message);
+  }
+  return data.url;
+}
+
 /* ---------- läsa ---------- */
 export async function loadData(session) {
   const [roles, functions, ambitions, members, groups, assignments, boards, templates, raids] = await Promise.all([
