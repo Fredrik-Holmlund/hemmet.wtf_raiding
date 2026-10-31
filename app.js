@@ -284,12 +284,11 @@ function renderGroups() {
       (a.raid_id ?? "~").localeCompare(b.raid_id ?? "~", "sv", { numeric: true }) || a.name.localeCompare(b.name, "sv"));
     if (!gs.length) return "";
     return `<section class="gsec" aria-label="${n}-manna">
-      ${size ? "" : `<h2 class="gsec__h">${NUM(n)}-manna</h2>`}
+      <div class="gsec__h"><h2>${NUM(n)}-manna</h2><span>Raid Master</span><span>Tid</span><span>Signups</span></div>
       ${gs.map(groupListRow).join("")}
     </section>`;
   }).join("");
-  $("#groups").innerHTML = sections ? `<div class="ghead" aria-hidden="true"><span></span><span>Grupp</span><span>Raid Master</span><span>Tid</span><span>Signups</span></div>${sections}`
-    : `<p class="note">${filterActive() ? "Ingen grupp matchar filtren. Prova att rensa något, eller fråga i Discord: det brukar finnas plats." : "Inga raidgrupper än."}</p>`;
+  $("#groups").innerHTML = sections || `<p class="note">${filterActive() ? "Ingen grupp matchar filtren. Prova att rensa något, eller fråga i Discord: det brukar finnas plats." : "Inga raidgrupper än."}</p>`;
 
   // borttagna grupper syns bara för ledningen, som kan ångra eller radera för gott
   const removed = can.removeGroup(me) ? D.groups.filter(g => g.status === "archived") : [];
