@@ -37,7 +37,7 @@ Rollerna **Guild Master** och **Guild Leader** på Discord-servern ger ledningen
 roller på sidan: `supabase/functions/sync-discord-roles` frågar Discord med en bot.
 
 1. **Boten:** i Discord Developer Portal, samma applikation som inloggningen: gå till Bot och skapa eller återställ token.
-   Inga privilegierade intents behövs.
+   Slå på **Server Members Intent**: schemat hämtar hela medlemslistan, och den som inte är med på servern visas inte på sidan.
 2. **Bjud in den:** under OAuth2 → URL Generator, välj scope `bot` och inga behörigheter. Öppna länken och välj servern.
 3. **Hemligheter:** i Supabase under Edge Functions → Secrets, lägg till:
    - `DISCORD_BOT_TOKEN`: botens token

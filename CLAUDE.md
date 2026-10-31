@@ -65,8 +65,8 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
   välkomna". Syns på kortet och som ruta på gruppens sida. **Öppet och Hör av dig räknas båda som öppna för
   signups:** kryssrutan "Bara grupper som är öppna för signups" i filtret och `#raidgrupper/soker` (knappen "Öppna för signups") visar båda.
   Roller och text heter fortfarande `recruit_roles`, `recruit_note` i koden. Grupperna har inga egna Discord-kanaler (beslut 2026-10-11), så det ska inte stå i texterna.
-- **Namn** visas utan kapslar: klassfärg och en prick som är **grön när personen är online på Discord**, grå annars
-  (`members.online`, skrivs av Discord-boten; undantaget från "inget grönt", som "lever"-pricken på leveling-sidan).
+- **Namn** visas utan kapslar: klassfärg, och en grön prick när personen är online på Discord (`members.online`; undantaget från "inget grönt",
+  som "lever"-pricken på leveling-sidan). Närvaro kräver en bot som är uppkopplad hela tiden, och den finns inte än. Tills dess syns ingen prick.
   Assignment-tavlan behåller sina brickor.
 - **Inloggning:** Discord via Supabase (`signIn` i data.js, PKCE så att `?code=` inte krockar med #-adresserna). Allt går att läsa utan inloggning.
   Första inloggningen skapar en medlemsrad utan namn i spelet (`handle_new_user`), och sidan öppnar profilen direkt. Medlemmen syns inte förrän profilen är ifylld.
@@ -99,7 +99,7 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
 ```
 roles                 id, level, name, short, description, responsibilities[], mandate
 functions             id, sort, name, short_name, purpose, summary, description, deadline, tools[], holder_title?
-members               id, user_id, discord_id, discord, character?, class?, guild_roles[], online, last_seen
+members               id, user_id, discord_id, discord, character?, class?, guild_roles[], in_guild, online, last_seen
 ambitions             level (A/B/C), rank, name, tagline, color, quality (Legendary/Epic/Rare)
 groups                id, name, size (10/20/40), raid_id (A1, B2 …), ambition, raid_days[], raid_start, schedule_note, status (active/archived),
                       blurb, details, signup (open/ask/full), recruit_roles[], recruit_note, links {thread}, updated_by, updated_at
@@ -205,14 +205,15 @@ Reglerna sitter i `supabase/migrations`. Ändras de ska `perms.js` och `scripts/
 - **Sidan pratar direkt med Supabase** med publishable-nyckeln. RLS avgör vad som går att läsa och ändra.
 - **Utan inloggning** syns det sidan visar. Discord-uppgifterna syns bara för inloggade, och kopplingen till kontot (`user_id`) för ingen.
 - **Discord är källan för ledningsrollerna.** Rollerna *Guild Master* och *Guild Leader* på servern blir `guild_master`/`guild_leader`
-  (samma nivå, ledningen). Edge function `sync-discord-roles` skriver `guild_roles` med service role: vid varje sidladdning för den inloggade
-  och var 15:e minut för alla (Supabase Cron), så att en borttagen roll slutar gälla. Svarar inte Discord ändras inget.
+  (samma nivå, ledningen). Edge function `sync-discord-roles` skriver `guild_roles` och `in_guild` med service role: vid varje sidladdning för den
+  inloggade och var 15:e minut för alla (Supabase Cron, hela medlemslistan i ett svep, kräver Server Members Intent), så att en borttagen roll
+  slutar gälla. Svarar inte Discord ändras inget.
   Ingen kan ge sig själv mer behörighet på sidan, och roller satta för hand skrivs över.
 - **Databasen är källan för raidorganisationen** (grupper, Raid Master, funktioner). Sex funktioner gånger N grupper
   som Discord-roller skulle bli hundratals roller.
 - **Boten speglar ut** enkla Discord-roller från sidan, till exempel "Raid Master" och "Grupp: Spiselgänget", så att
   ingen behöver uppdatera på två ställen.
-- **Alla med ett Discord-konto kan logga in** och får en medlemsrad utan behörigheter. Kontroll mot guildens Discord-server kommer med boten.
+- **Alla med ett Discord-konto kan logga in** och får en medlemsrad utan behörigheter, men visas bara om de är med på guildens server (`in_guild`).
 
 ## Discord-boten (plan, inte byggd)
 
