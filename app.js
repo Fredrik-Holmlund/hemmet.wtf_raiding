@@ -1,3 +1,4 @@
+import { icon } from "./icons.js";
 import { configured, getSession, currentMemberId, syncRoles, syncThread, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
 import { can, isLeadership } from "./perms.js";
 import { renderAssignments, drawBoard, bindAssignments } from "./assignments.js";
@@ -202,6 +203,7 @@ function levelPanels() {
 /* ---------- vy B: raidgrupperna ---------- */
 // filtren på Raidgrupper: storlek, dagar, starttid och signups (flera val = någon av dem)
 const gfilter = { sizes: new Set(), days: new Set(), time: "", open: false, roles: new Set() };   // open: Öppet och Hör av dig räknas båda som öppna
+const setInfo = (el, on) => { el.classList.toggle("is-open", on); el.querySelector("button").setAttribute("aria-expanded", on); };
 let openDrop = null;   // vilken filtermeny som är öppen: listan ritas om vid varje val
 const TIME_SLOTS = [["early", "Före 19:00"], ["mid", "19:00-20:59"], ["late", "21:00 och senare"]];
 const timeSlot = t => { if (!t) return null; const m = +t.slice(0, 2) * 60 + +t.slice(3, 5); return m < 19 * 60 ? "early" : m < 21 * 60 ? "mid" : "late"; };
@@ -232,11 +234,16 @@ const recruitRow = g => {
 
 // en rad per grupp: tabellen ska gå att läsa uppifrån och ned, och full grupp tonas ned så att de öppna syns först
 function groupListRow(g) {
-  const a = amb(g.ambition), rm = raidMaster(g), text = g.recruit_note || g.blurb;
+  const a = amb(g.ambition), rm = raidMaster(g);
+  const about = [["Om gruppen", g.blurb], ["Rostern", g.recruit_note]].filter(([, text]) => text);
   return `<article class="grow${hasRoom(g) ? "" : " grow--full"}" data-group="${g.id}" tabindex="0" role="link" aria-label="Öppna ${esc(g.name)}"${a ? ` style="--q:${a.color}"` : ""}>
     <span class="grow__code">${codeTag(g)}</span>
-    <div class="grow__main"><b>${esc(g.name)}</b>
-      <small>${a ? `<span class="grow__amb">${esc(a.name)}</span>` : ""}${a && text ? " · " : ""}${esc(text ?? "")}</small></div>
+    <div class="grow__main">
+      <div class="grow__name"><b>${esc(g.name)}</b>${about.length ? `<span class="ginfo" data-ginfo>
+        <button type="button" aria-label="Om ${esc(g.name)}" aria-expanded="false">${icon("info")}</button>
+        <span class="ginfo__pop" role="tooltip">${about.map(([label, text]) => `<b>${label}</b><span>${esc(text)}</span>`).join("")}</span>
+      </span>` : ""}</div>
+      <small>${a ? `<span class="grow__amb">${esc(a.name)}</span>` : ""}${a && g.recruit_note ? " · " : ""}${esc(g.recruit_note ?? "")}</small></div>
     <div class="grow__rm">${rm ? who(rm) : "-"}</div>
     <div class="grow__time">${esc(scheduleText(g) || "-")}</div>
     <div class="grow__signup">${recruitRow(g)}</div>
@@ -248,9 +255,9 @@ function renderGroups() {
   const active = all.filter(passes);
   const size = [...gfilter.sizes][0];
   const tab = (value, label, count) => `<button class="gtab" data-fsize="${value}" aria-pressed="${value === "all" ? !size : size === value}">${label}<small>${NUM(count)}</small></button>`;
-  const option = (attr, value, label, on) => `<button class="fchip" ${attr}="${value}" aria-pressed="${on}">${label}</button>`;
+  const option = (attr, value, label, on) => `<button class="fchip" ${attr}="${value}" aria-pressed="${on}">${label}${on ? icon("check") : ""}</button>`;
   const drop = (key, label, picked, options) => `<details class="fdrop${picked ? " is-set" : ""}" ${openDrop === key ? "open" : ""}>
-    <summary data-fdrop="${key}">${label}${picked ? `<b>${esc(picked)}</b>` : ""}</summary>
+    <summary data-fdrop="${key}">${label}${picked ? `<b>${esc(picked)}</b>` : ""}${icon("chevron-down")}</summary>
     <div class="fdrop__menu">${options}</div>
   </details>`;
   const shortDay = k => cap(DAYS.find(([d]) => d === k)[1]);
@@ -264,7 +271,7 @@ function renderGroups() {
       TIME_SLOTS.map(([k, v]) => option("data-ftime", k, v, gfilter.time === k)).join(""))}
     <label class="gswitch"><input type="checkbox" data-only-open ${gfilter.open ? "checked" : ""}><span>Bara öppna</span></label>
     ${filterActive() ? `<button class="linkish" data-filter-reset>Rensa</button>` : ""}
-    ${can.createGroup(me) ? `<a class="btn btn--primary btn--sm gbar__new" href="#ny-grupp/${size ?? 40}">Ny grupp</a>` : ""}
+    ${can.createGroup(me) ? `<a class="btn btn--primary btn--sm gbar__new" href="#ny-grupp/${size ?? 40}">${icon("plus")}Ny grupp</a>` : ""}
   </div>`;
   const sections = SIZE_SECTIONS.map(({ size: n }) => {
     // efter kod (A1, A2, B1 …), grupper utan kod sist i bokstavsordning
@@ -893,6 +900,10 @@ function bind() {
       return;
     }
     if (e.target.closest("#editor")) return;   // i formuläret öppnar namnen ingen panel
+    // infoikonen på gruppens rad: öppnas vid hovring, och med klick på en skärm utan mus. Raden ska inte öppnas.
+    const info = e.target.closest("[data-ginfo]");
+    document.querySelectorAll("[data-ginfo].is-open").forEach(el => { if (el !== info) setInfo(el, false); });
+    if (info) return setInfo(info, !info.classList.contains("is-open"));
     const t = e.target.closest("[data-member],[data-role],[data-fn],[data-group]");
     if (!t) return;
     if (t.dataset.member) memberDrawer(D.member[t.dataset.member]);

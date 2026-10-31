@@ -54,7 +54,7 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
 - **Undersidorna** Raidgrupper och Roller & ansvar har en lägre banderoll med samma bild och genomskinlig meny (`.subhero`). Gruppens egna sidor har ingen bild.
 - **Raidgrupper** `#raidgrupper`: en lista med en rad per grupp, inga kort (beslut 2026-10-31: raderna ska gå att skumma när grupperna blir många). Överst en verktygsrad som följer med vid
   scroll: flikarna Alla, 40, 20, 10, filtermenyerna Dagar (flera val = någon av dem), *Söker* tank/healer/DPS (grupper med plats som behöver rollen) och Start (före 19, 19–21, 21 och senare), *Bara öppna* och
-  *Rensa*. Valda filter står i menyknappen. Ledningen ser *Ny grupp* i verktygsraden (`#ny-grupp/40`, storleken från fliken) och *Borttagna grupper*. Fulla grupper tonas ned; färgstrecket till vänster är nivån.
+  *Rensa*. Valda filter står i menyknappen. Ledningen ser *Ny grupp* i verktygsraden (`#ny-grupp/40`, storleken från fliken) och *Borttagna grupper*. Fulla grupper tonas ned; färgstrecket till vänster är nivån. Infoikonen vid namnet visar *Om gruppen* och texten om rostern (hovring, eller klick på skärm utan mus).
 - **Roller & ansvar** `#roller`: de fem rollerna, de sex funktionerna, ambitionsnivåerna och *Vem håller i nycklarna?* (hierarkin med bara titlar, klickbara, och Raid Masterns stadgar med korta texter ur `functions.summary`).
 - **Signups** (hette Rekrytering; "rekrytering" gäller guilden, inte en grupp, beslut 2026-10-12) har tre lägen (`groups.signup`):
   **Öppet** (`open`, signa direkt i tråden), **Hör av dig** (`ask`, prata med Raid Master först) och **Fullt hus** (`full`, ingen
@@ -285,6 +285,7 @@ Uppkomna under arbetet:
 
 Samma regler som leveling-sidan. Se README.md i `C:\JOBB\Wow Forever\Hemmet - Levelingresa` under "Formspråket".
 Tillägg för ledningssidan (beslut 2026-10-12):
+- **Ikoner:** Lucide för gränssnittet (beslut 2026-10-31), en i taget som SVG i `icons.js`, inget paket och inget byggsteg. Spelets egna ikoner behålls där de betyder något i spelet, som rollerna.
 - **Spelets Group Finder-panel** (`assets/lfg-panel.webp`: äventyrarna på klippan, svart kant, tunn guldlinje, mörk rubriklist,
   listrader) är stilen för raidgrupper och organisation: gruppens sida, nivåpanelerna och hierarkin på startsidan.
 - **Pergament = utmärkelser och guildens stadgar.** De sex uppgifterna på startsidan är "Raid Masterns stadgar" ("Det här ska
