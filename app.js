@@ -284,7 +284,7 @@ function renderGroups() {
       (a.raid_id ?? "~").localeCompare(b.raid_id ?? "~", "sv", { numeric: true }) || a.name.localeCompare(b.name, "sv"));
     if (!gs.length) return "";
     return `<section class="gsec" aria-label="${n}-manna">
-      <div class="gsec__h"><h2>${NUM(n)}-manna</h2><span>Raid Master</span><span>Tid</span><span>Signups</span></div>
+      <div class="gsec__h"><h2>${NUM(n)}<small>man</small></h2><span>Raid Master</span><span>Tid</span><span>Signups</span></div>
       ${gs.map(groupListRow).join("")}
     </section>`;
   }).join("");
