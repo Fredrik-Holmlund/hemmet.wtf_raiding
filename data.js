@@ -39,8 +39,8 @@ export async function syncRoles() {
   catch (err) { console.warn(err); }
 }
 
-// Boten skapar gruppens tråd i rätt forum. Funktionen kontrollerar behörigheten och sparar länken på gruppen.
-export async function createThread(groupId, content) {
+// Boten skapar gruppens tråd i rätt forum, eller uppdaterar den som finns. Funktionen kontrollerar behörigheten och sparar länken.
+export async function syncThread(groupId, content) {
   const { data, error } = await sb.functions.invoke("create-group-thread", { body: { group_id: groupId, content } });
   if (error) {
     const body = await error.context?.json?.().catch(() => null);

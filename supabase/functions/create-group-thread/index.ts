@@ -1,6 +1,7 @@
 // Skapar gruppens tråd i rätt forum på Discord (10-man-raids, 20-man-raids, 40-man-raids) och sparar länken på gruppen.
+// Har gruppen redan en tråd uppdateras den i stället: inlägget, titeln och taggarna.
 //
-// Körs av sidan när en grupp skapas, eller med knappen på gruppens sida. Bara ledningen och gruppens Raid Master får.
+// Körs av sidan när en grupp skapas eller sparas, eller med knappen på gruppens sida. Bara ledningen och gruppens Raid Master får.
 // Inlägget skrivs av sidan, men allt annat bestäms här: vem som får, vilket forum och trådens titel.
 // Omnämnanden visas men pingar ingen, så ett inlägg kan aldrig nå @everyone.
 //
@@ -22,6 +23,39 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
+// forumets taggar: nivån och signupläget, om de finns med samma namn på Discord
+const tagsFor = (forum: { available_tags?: { id: string; name: string }[] }, level: string | undefined, signup: string) => {
+  const wanted = [level, SIGNUP_TAGS[signup]].filter(Boolean).map(t => t!.toLowerCase());
+  return (forum.available_tags ?? []).filter(t => wanted.includes(t.name.toLowerCase())).map(t => t.id);
+};
+const titleFor = (group: { name: string; size: number }, level?: string) =>
+  [group.name, `${group.size}-manna`, level].filter(Boolean).join(" - ").slice(0, 100);
+
+// Starterinlägget har samma id som tråden. Boten kan bara ändra sina egna inlägg, så en länk man klistrat in själv nekas här.
+async function updateThread(threadId: string, content: string, title: (t: string) => string, tags: (forum: unknown) => string[]) {
+  const res = await fetch(`${DISCORD}/channels/${threadId}`, { headers: BOT });
+  if (!res.ok) return res;
+  const thread = await res.json();
+  const parent = await fetch(`${DISCORD}/channels/${thread.parent_id}`, { headers: BOT });
+  if (!parent.ok) return parent;
+  const applied = tags(await parent.json());
+  const same = (a: string[], b: string[]) => [...a].sort().join() === [...b].sort().join();
+
+  // bara det som ändrats: Discord tillåter få namnbyten per tiotal minuter. En gammal tråd är arkiverad och måste öppnas först.
+  const changes: Record<string, unknown> = {};
+  const name = title(thread.name);
+  if (name !== thread.name) changes.name = name;
+  if (!same(applied, thread.applied_tags ?? [])) changes.applied_tags = applied;
+  if (thread.thread_metadata?.archived) changes.archived = false;
+  if (Object.keys(changes).length) {
+    const patched = await fetch(`${DISCORD}/channels/${threadId}`, { method: "PATCH", headers: BOT, body: JSON.stringify(changes) });
+    if (!patched.ok) console.error("Discord, tråden:", patched.status, await patched.text());   // inlägget är viktigast: fortsätt
+  }
+  return await fetch(`${DISCORD}/channels/${threadId}/messages/${threadId}`, {
+    method: "PATCH", headers: BOT, body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+  });
+}
+
 Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
@@ -40,7 +74,21 @@ Deno.serve(async req => {
     const { data: rm } = await db.from("assignments").select("member_id")
       .match({ group_id, slot: "raid_master", member_id: member.id }).maybeSingle();
     if (!lead && !rm) return json({ error: "Du får inte skapa tråden för den här gruppen" }, 403);
-    if (group.links?.thread) return json({ error: "Gruppen har redan en tråd" }, 409);
+
+    const { data: level } = group.ambition
+      ? await db.from("ambitions").select("name").eq("level", group.ambition).maybeSingle()
+      : { data: null };
+
+    if (group.links?.thread) {
+      const id = String(group.links.thread).match(new RegExp(`/channels/${GUILD}/(\\d+)`))?.[1];
+      if (!id) return json({ error: "Tråden ligger inte på guildens server" }, 400);
+      const updated = await updateThread(id, content, () => titleFor(group, level?.name), f => tagsFor(f as never, level?.name, group.signup));
+      if (!updated.ok) {
+        console.error("Discord, inlägget:", updated.status, await updated.text());
+        return json({ error: `Discord tog inte emot ändringen (${updated.status})` }, 502);
+      }
+      return json({ url: group.links.thread });
+    }
 
     const channels = await fetch(`${DISCORD}/guilds/${GUILD}/channels`, { headers: BOT });
     if (!channels.ok) throw new Error(`Discord svarade ${channels.status} på kanalerna`);
@@ -48,19 +96,10 @@ Deno.serve(async req => {
     const forum = (await channels.json()).find((c: { type: number; name: string }) => c.type === FORUM_CHANNEL && c.name === forumName);
     if (!forum) return json({ error: `Hittar inte forumet ${forumName}` }, 404);
 
-    const { data: level } = group.ambition
-      ? await db.from("ambitions").select("name").eq("level", group.ambition).maybeSingle()
-      : { data: null };
-    const title = [group.name, `${group.size}-manna`, level?.name].filter(Boolean).join(" - ").slice(0, 100);
-
-    // forumets taggar: nivån och signupläget, om de finns med samma namn på Discord
-    const wanted = [level?.name, SIGNUP_TAGS[group.signup]].filter(Boolean).map(t => t.toLowerCase());
-    const tags = (forum.available_tags ?? []).filter((t: { name: string }) => wanted.includes(t.name.toLowerCase())).map((t: { id: string }) => t.id);
-
     const created = await fetch(`${DISCORD}/channels/${forum.id}/threads`, {
       method: "POST",
       headers: BOT,
-      body: JSON.stringify({ name: title, applied_tags: tags, message: { content, allowed_mentions: { parse: [] } } }),
+      body: JSON.stringify({ name: titleFor(group, level?.name), applied_tags: tagsFor(forum, level?.name, group.signup), message: { content, allowed_mentions: { parse: [] } } }),
     });
     if (!created.ok) {
       console.error("Discord:", created.status, await created.text());

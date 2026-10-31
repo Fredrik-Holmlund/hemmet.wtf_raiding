@@ -1,4 +1,4 @@
-import { configured, getSession, currentMemberId, syncRoles, createThread, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
+import { configured, getSession, currentMemberId, syncRoles, syncThread, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
 import { can, isLeadership } from "./perms.js";
 import { renderAssignments, drawBoard, bindAssignments } from "./assignments.js";
 import { embers } from "./embers.js";
@@ -752,9 +752,10 @@ async function saveDraft(form) {
     for (const f of D.functions) await setSlot(saved.id, f.id, size >= 20 ? draft.slots[f.id] : []);
     draft = null;
     refresh();
-    if (isNew) {
-      try { await createThread(saved.id, discordPost(D.group[saved.id])); refresh(); }
-      catch (err) { console.error(err); toast(`Gruppen är sparad, men tråden på Discord kunde inte skapas: ${err.message}`); }
+    // ny grupp: boten skapar tråden. Finns en tråd följer inlägget, titeln och taggarna med.
+    if (isNew || saved.links?.thread) {
+      try { await syncThread(saved.id, discordPost(D.group[saved.id])); refresh(); }
+      catch (err) { console.error(err); toast(`Gruppen är sparad, men Discord kunde inte uppdateras: ${err.message}`); }
     }
     location.hash = `grupp/${saved.id}`;
   } catch (err) {
@@ -847,7 +848,7 @@ function bind() {
     const thread = e.target.closest("[data-discord-thread]");
     if (thread) {
       thread.disabled = true;
-      try { await createThread(thread.dataset.discordThread, discordPost(D.group[thread.dataset.discordThread])); refresh(); route(); }
+      try { await syncThread(thread.dataset.discordThread, discordPost(D.group[thread.dataset.discordThread])); refresh(); route(); }
       catch (err) { thread.disabled = false; console.error(err); toast(`Tråden kunde inte skapas: ${err.message}`); }
       return;
     }
