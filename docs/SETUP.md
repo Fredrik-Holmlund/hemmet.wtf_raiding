@@ -75,7 +75,7 @@ första inlägg. Forumen hittas på namnet, så de måste heta exakt så.
 1. Lägg upp funktionen som i steget ovan: `create-group-thread`, med **Verify JWT** avstängt. Den använder samma hemligheter.
 2. Boten behöver **View Channels**, **Send Messages** och **Embed Links** i de tre forumen. Är forumen privata, lägg till boten eller
    dess roll i forumens behörigheter.
-3. Kräver forumen en tagg för nya inlägg måste det stängas av, annars nekar Discord tråden.
+3. Tråden får forumets taggar för nivån och signupläget (`Chill Raiding`, `Öppet`, `Hör av dig`, `Fullt Hus` …), om de heter som på sidan.
 
 Finns ingen tråd på en grupp har gruppens sida knappen *Skapa tråd på Discord*.
 

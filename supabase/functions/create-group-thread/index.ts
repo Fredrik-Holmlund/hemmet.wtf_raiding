@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const DISCORD = "https://discord.com/api/v10";
 const FORUM_CHANNEL = 15;
+const SIGNUP_TAGS: Record<string, string> = { open: "Öppet", ask: "Hör av dig", full: "Fullt Hus" };
 const GUILD = Deno.env.get("DISCORD_GUILD_ID")!;
 const BOT = { Authorization: `Bot ${Deno.env.get("DISCORD_BOT_TOKEN")}`, "Content-Type": "application/json" };
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -32,7 +33,7 @@ Deno.serve(async req => {
     if (typeof content !== "string" || !content.trim() || content.length > 2000) return json({ error: "Inlägget är för långt" }, 400);
 
     const { data: member } = await db.from("members").select("id, guild_roles").eq("user_id", user.id).maybeSingle();
-    const { data: group } = await db.from("groups").select("id, name, size, ambition, links").eq("id", group_id).maybeSingle();
+    const { data: group } = await db.from("groups").select("id, name, size, ambition, signup, links").eq("id", group_id).maybeSingle();
     if (!member || !group) return json({ error: "Hittar inte gruppen" }, 404);
 
     const lead = member.guild_roles.some((r: string) => r === "guild_master" || r === "guild_leader");
@@ -52,10 +53,14 @@ Deno.serve(async req => {
       : { data: null };
     const title = [group.name, `${group.size}-manna`, level?.name].filter(Boolean).join(" - ").slice(0, 100);
 
+    // forumets taggar: nivån och signupläget, om de finns med samma namn på Discord
+    const wanted = [level?.name, SIGNUP_TAGS[group.signup]].filter(Boolean).map(t => t.toLowerCase());
+    const tags = (forum.available_tags ?? []).filter((t: { name: string }) => wanted.includes(t.name.toLowerCase())).map((t: { id: string }) => t.id);
+
     const created = await fetch(`${DISCORD}/channels/${forum.id}/threads`, {
       method: "POST",
       headers: BOT,
-      body: JSON.stringify({ name: title, message: { content, allowed_mentions: { parse: [] } } }),
+      body: JSON.stringify({ name: title, applied_tags: tags, message: { content, allowed_mentions: { parse: [] } } }),
     });
     if (!created.ok) {
       console.error("Discord:", created.status, await created.text());

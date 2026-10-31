@@ -87,7 +87,7 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
 - **Tråd på Discord:** när en grupp skapas lägger boten upp en tråd i rätt forum (`10-man-raids`, `20-man-raids`, `40-man-raids`) med titeln
   `Namn - 40-manna - Chill Raiding` och samma text som *Text till Discord* (edge function `create-group-thread`, högst 2000 tecken, Detaljer kortas vid behov).
   Omnämnanden visas men pingar ingen. Länken sparas i `links.thread`. Saknas tråd har gruppens sida knappen *Skapa tråd på Discord*.
-  Inlägget uppdateras inte när gruppen ändras.
+  Tråden får forumets taggar för nivån och signupläget. Inlägg och taggar uppdateras inte när gruppen ändras.
 - **Kontot i menyn** visar profilbilden från Discord (`user_metadata.avatar_url`, uppdateras vid inloggning) och namnet i klassfärg.
 - **Assignments** `#grupp/<id>/assignments`: tavlan, se nedan.
 - **Redigera** `#grupp/<id>/redigera` och **skapa** `#ny-grupp`. Saknas behörighet visas "Låst dörr".
