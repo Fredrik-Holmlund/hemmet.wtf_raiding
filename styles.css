@@ -524,8 +524,8 @@ thead .bd__role, thead .bd__player { z-index: 2; background: var(--obsidian-850)
 .bd__table { table-layout: fixed; width: 100%; }
 .bd__col { min-width: 0; overflow: hidden; }
 .bd__colname { overflow-wrap: anywhere; hyphens: auto; }
-.bd__colctl { top: 2px; }
-.bd__colimg { top: 2px; }
+.bd__colctl { top: auto; bottom: 2px; left: 2px; transform: none; }   /* ovanpå bilden, så att namnet alltid går att klicka på */
+.bd__colimg { top: auto; bottom: 2px; right: 2px; }
 .bd__boss { width: 100%; max-width: 96px; height: auto; aspect-ratio: 2 / 1; }
 .bd__role, .bd__player { position: static; width: auto; min-width: 0; }
 .bd__sec th { position: static; }
