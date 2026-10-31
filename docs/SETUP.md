@@ -81,7 +81,7 @@ Finns ingen tråd på en grupp har gruppens sida knappen *Skapa tråd på Discor
 
 ## 5c. Assignments till Discord
 
-Under *Bild till Discord* på tavlan kan ledningen och gruppens Raid Master, Raid Leader och Roster & uttagning skicka bilden till gruppens tråd.
+Under *Bild till Discord* på tavlan kan ledningen och gruppens Raid Master, Raid Leader, Roster & uttagning och Assignments & taktik skicka bilden till gruppens tråd.
 
 1. Lägg upp funktionen `post-assignments` på samma sätt, med **Verify JWT** avstängt.
 2. Ge boten **Bifoga filer** i de tre forumen.

@@ -1,6 +1,6 @@
 // Postar bilden av assignment-tavlan i gruppens tråd på Discord.
 //
-// Får göras av ledningen och av gruppens Raid Master, Raid Leader och den som har Roster & uttagning.
+// Får göras av ledningen och av gruppens Raid Master, Raid Leader och de som har Roster & uttagning eller Assignments & taktik.
 // Samma regel finns i perms.js (can.postAssignments), men det är den här som gäller.
 // Bilden ritas på sidan och skickas hit. Bara PNG släpps igenom, och inlägget får ingen text.
 //
@@ -12,7 +12,7 @@ const DISCORD = "https://discord.com/api/v10";
 const GUILD = Deno.env.get("DISCORD_GUILD_ID")!;
 const BOT_TOKEN = Deno.env.get("DISCORD_BOT_TOKEN");
 const MAX_BYTES = 8 * 1024 * 1024;
-const POST_SLOTS = ["raid_master", "leadership", "roster"];
+const POST_SLOTS = ["raid_master", "leadership", "roster", "assignments"];
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 

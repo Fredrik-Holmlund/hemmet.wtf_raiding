@@ -171,8 +171,8 @@ En tavla per raidgrupp, sparad som ett JSON-dokument (`assignment_boards.data`):
   *Kopiera bild* lägger PNG i urklipp (Ctrl+V i Discord), *Ladda ner* som reserv. Urklipp kräver ett riktigt klick i Chrome/Edge;
   Claude-appens webbläsarpanel nekar urklipp helt, så kopieringen är inte verifierad där. Senare: *Skicka till Discord*
   via boten (se *Discord-boten*).
-- **Skicka till tråden** (i samma dialog): ledningen och gruppens Raid Master, Raid Leader och Roster & uttagning (`can.postAssignments`, edge function
-  `post-assignments`) skickar bilden till gruppens tråd. Varje skickning blir ett nytt inlägg utan text och pingar ingen.
+- **Skicka till tråden** (i samma dialog): ledningen och gruppens Raid Master, Raid Leader, Roster & uttagning och Assignments & taktik (`can.postAssignments`, edge function
+  `post-assignments`) skickar bilden till gruppens tråd. Varje skickning blir ett nytt inlägg, utan text och utan ping (beslut 2026-10-31: en ny bild ska hamna längst ner i tråden, inte ersätta den gamla).
 - Tavlan sparas 300 ms efter senaste ändringen, hela dokumentet varje gång. **Redigerar två personer samtidigt vinner den som sparar sist.**
 - **Mallar** är en raid utan spelarnamn, gemensamma för guilden. *Lägg till som raid* (i Mallar eller + Raid), *Spara … som mall*.
 - Äldre sparat format (flikar med gemensamma rader) konverteras automatiskt (`migrate()` i assignments.js).
@@ -233,8 +233,6 @@ så allt går via Supabase (edge functions med service role).
 - **Kanalupplägg (ledningens text 2026-10-12):** forumkanaler för 10-, 20- och 40-mannaraids, där **varje grupp har en egen
   tråd** med information, diskussioner och signups. Grupperna har inga egna kanaler. Boten postar i gruppens tråd; tråden
   anges som länk i gruppens formulär (`links.thread`, "Gruppens tråd på Discord"), och tråd-id:t tas ur länken.
-- **Boten uppdaterar sitt förra inlägg** för samma raid i stället för att posta nytt: alltid exakt en aktuell bild per raid.
-  Kräver en tabell som minns meddelandet, t.ex. `discord_posts (group_id, raid_id, channel_id, thread_id, message_id, posted_at)`.
 - **Valfri ping** av de som står på tavlan: Raid-Helper-exporten har allas Discord-id (`userId`). Spara det i compen vid import
   (görs inte i dag) så kan boten nämna exakt rätt personer.
 
