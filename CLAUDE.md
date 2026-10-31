@@ -47,8 +47,8 @@ Preview-konfigurationen heter `raiding` (port 5174).
 Flera sidor (hash-adresser, så att det fungerar som statisk sida). Headern är byggd som på hemmet.wtf, genomskinlig över heron,
 men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Loggan leder till hemmet.wtf.
 
-- **Översikt** `#start`: hero som på hemmet.wtf med egen bild (`assets/hero.webp`), glöd (`embers.js`) och *Vi ses i raiden.* Tre siffror ur
-  databasen (raidgrupper, öppna för signups, i hemmet) i stället för nedräkningen. Rullbandet visar veckans raids totalt och per veckodag
+- **Översikt** `#start`: hero som på hemmet.wtf med egen bild (`assets/hero.webp`), glöd (`embers.js`) och *Vi ses i raiden.* Tre siffror i stället för
+  nedräkningen: raidgrupper, öppna för signups och i hemmet (medlemmar på Discord, från den publika inbjudningslänken). Rullbandet visar veckans raids totalt och per veckodag
   (`raid_days` på aktiva grupper, en raid per grupp och dag; bara dagar med raids). Under det grupperna per nivå (A/B/C + koderna).
   **Förklaringarna hör inte hit:** "Ordning i hemmet" och *Hitta ditt rum* finns inte på live-sidan. `#raidgrupper/soker` öppnar listan filtrerad.
 - **Raidgrupper** `#raidgrupper`: korten under rubrikerna 40-manna, 20-manna och 10-manna. Överst filter (2026-10-12): storlek,

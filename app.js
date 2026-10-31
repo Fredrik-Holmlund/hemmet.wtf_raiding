@@ -118,12 +118,25 @@ const qm = roleId => `<span class="qm" role="button" tabindex="0" data-role="${r
 /* ---------- startsidan: hierarkin med titlar, nivåerna och de sex uppgifterna ---------- */
 /* heron: tre siffror i stället för hemmet.wtf:s nedräkning, och rullbandet med veckans raids */
 const DAY_NAMES = { mon: "Måndag", tue: "Tisdag", wed: "Onsdag", thu: "Torsdag", fri: "Fredag", sat: "Lördag", sun: "Söndag" };
+// "i hemmet" = medlemmarna på Discord-servern, samma publika räknare som på hemmet.wtf. Går den inte att nå visas de inloggade medlemmarna.
+const DISCORD_INVITE = "Gx5xQMurNy";
+let discordMembers = null;
+async function loadDiscordCount() {
+  try {
+    const r = await fetch(`https://discord.com/api/v10/invites/${DISCORD_INVITE}?with_counts=true`);
+    discordMembers = (await r.json()).approximate_member_count ?? D.members.length;
+  } catch {
+    discordMembers = D.members.length;
+  }
+  renderHero();
+}
+
 function renderHero() {
   const groups = activeGroups();
   const open = groups.filter(hasRoom).length;
   const stat = (n, label) => `<div><b>${n}</b><span>${label}</span></div>`;
   $("#heroStats").innerHTML = stat(groups.length, groups.length === 1 ? "raidgrupp" : "raidgrupper")
-    + stat(open, open === 1 ? "öppen för signups" : "öppna för signups") + stat(D.members.length, "i hemmet");
+    + stat(open, open === 1 ? "öppen för signups" : "öppna för signups") + stat(discordMembers ?? "–", "i hemmet");
   const raids = day => groups.filter(g => g.raid_days?.includes(day)).length;
   const days = DAYS.map(([k]) => [k, raids(k)]).filter(([, n]) => n);
   const week = days.reduce((sum, [, n]) => sum + n, 0);
@@ -950,6 +963,7 @@ async function start() {
   D = index(RAW);
   if (session) me = D.member[await currentMemberId()] ?? null;
   refresh(); bind(); route();
+  loadDiscordCount();
   if (me && !me.character) profileDrawer();   // första inloggningen
 }
 
