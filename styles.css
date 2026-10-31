@@ -1003,7 +1003,9 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .gsec__h span:not(.n) { font: 400 12px/1 var(--font-ui); letter-spacing: var(--cap); text-transform: uppercase; color: #b9ab94; }
 .gsec__h + .grow { border-top: 0; }
 .grow { position: relative; min-height: 62px; padding: 8px 12px; border-top: 1px solid var(--line); cursor: pointer; transition: background-color .12s; }
-.grow:hover { background: rgba(240, 210, 122, .05); }
+.grow::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px; background: var(--q, transparent); opacity: .75; }
+.grow:nth-of-type(even) { background: rgba(255, 255, 255, .035); }
+.grow:hover, .grow:nth-of-type(even):hover { background: rgba(240, 210, 122, .08); }
 .grow:focus-visible { outline-offset: -2px; }
 .grow__main { min-width: 0; }
 .grow__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
