@@ -525,7 +525,7 @@ thead .bd__role, thead .bd__player { z-index: 2; background: var(--obsidian-850)
 .bd__col { min-width: 0; overflow: hidden; }
 .bd__colname { overflow-wrap: anywhere; hyphens: auto; }
 .bd__colctl { top: auto; bottom: 2px; left: 2px; transform: none; }   /* ovanpå bilden, så att namnet alltid går att klicka på */
-.bd__colimg { top: auto; bottom: 2px; right: 2px; }
+.bd__colimg { top: auto; bottom: 2px; right: 2px; z-index: 1; }   /* bossbilden ligger annars ovanpå */
 .bd__boss { width: 100%; max-width: 96px; height: auto; aspect-ratio: 2 / 1; }
 .bd__role, .bd__player { position: static; width: auto; min-width: 0; }
 .bd__sec th { position: static; }
@@ -535,7 +535,7 @@ thead .bd__role, thead .bd__player { z-index: 2; background: var(--obsidian-850)
 .bd__row:hover > * { background: #1b2744; }
 .bd__table td.bd__cell, .bd__table td.bd__player { overflow: hidden; }
 .bd__cell .pchip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
-.pchip--solid { background: var(--c); color: var(--ct); border-color: transparent; font-weight: 700; }
+.pchip--solid { background: var(--c); color: rgba(0, 0, 0, .72); border-color: transparent; font-weight: 700; text-shadow: none; }   /* svart med lite genomskinlighet, så att klassfärgen hänger med */
 .bd__player .pchip--solid { display: block; width: 100%; border-radius: 4px; padding: 2px 8px; overflow: hidden; text-overflow: ellipsis; }
 .bd__pager { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: -4px 0 10px; font-size: 13px; color: var(--text-muted); }
 .bd__pager b { color: var(--text-primary); font-weight: 600; }
@@ -829,7 +829,7 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 /* spelarcellen helt i klassfärgen, utan skugga på namnet */
 .bd__table .bd__row > td.bd__player.is-filled { background: var(--c); }
 .bd__table .bd__row:hover > td.bd__player.is-filled { background: color-mix(in srgb, var(--c) 88%, #fff); }
-.bd__player.is-filled .pchip--solid { display: block; width: 100%; padding: 0; border: 0; border-radius: 0; background: none; color: var(--ct);
+.bd__player.is-filled .pchip--solid { display: block; width: 100%; padding: 0; border: 0; border-radius: 0; background: none; color: rgba(0, 0, 0, .72);
   font-weight: 700; text-shadow: none; overflow: hidden; text-overflow: ellipsis; }
 .bd__player.is-filled { text-shadow: none; }
 .bd__player.is-filled .bd__x { background: rgba(0, 0, 0, .35); }

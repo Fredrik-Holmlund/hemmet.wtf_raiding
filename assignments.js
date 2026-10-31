@@ -76,18 +76,10 @@ function playerInfo(name) {
   const m = ctx.D.members.find(m => low(m.character) === low(name));
   return { name: m?.character ?? name, color: m ? ctx.CLASS_COLORS[m.class] ?? "#fff" : "#c9bfb5", spec: null };
 }
-// mörk eller ljus text beroende på klassfärgen (shamanens blå behöver vit text, prästens vita svart)
-function textOn(hex) {
-  let h = String(hex || "#c9bfb5").replace("#", "");
-  if (h.length === 3) h = [...h].map(x => x + x).join("");
-  const n = parseInt(h, 16);
-  const [r, g, b] = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
-  return .2126 * r + .7152 * g + .0722 * b > .18 ? "#0b0f1a" : "#ffffff";
-}
 const chip = (name, attrs = "", solid = false) => {
   const p = playerInfo(name);
   if (!p) return "";
-  return solid ? `<span class="pchip pchip--solid" style="--c:${p.color};--ct:${textOn(p.color)}" ${attrs}>${esc(p.name)}</span>`
+  return solid ? `<span class="pchip pchip--solid" style="--c:${p.color}" ${attrs}>${esc(p.name)}</span>`
     : `<span class="pchip" style="--c:${p.color}" ${attrs}>${esc(p.name)}</span>`;
 };
 const placedIn = r => new Set(rowsOf(r).map(x => low(x.player)).filter(Boolean));
@@ -299,7 +291,7 @@ function table(r, cols = r.columns) {
 }
 
 // spelarcellen fylls helt med klassfärgen (texten mörk eller ljus efter färgen)
-const playerFill = row => { const p = row.player && playerInfo(row.player); return p ? `style="--c:${p.color};--ct:${textOn(p.color)}"` : ""; };
+const playerFill = row => { const p = row.player && playerInfo(row.player); return p ? `style="--c:${p.color}"` : ""; };
 
 function slot(row, edit) {
   if (row.player) {
