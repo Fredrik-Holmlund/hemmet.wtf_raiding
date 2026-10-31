@@ -52,8 +52,8 @@ let session = null;
 function index(data) {
   const byId = arr => Object.fromEntries(arr.map(x => [x.id, x]));
   data.functions.sort((a, b) => a.sort - b.sort);
-  // den som precis har loggat in första gången har inget namn i spelet än och visas inte förrän profilen är ifylld
-  return { ...data, members: data.members.filter(m => m.character), role: byId(data.roles), fn: byId(data.functions), member: byId(data.members), group: byId(data.groups) };
+  // visas gör bara de som har fyllt i sin profil och är med på guildens Discord-server. Alla med ett Discord-konto kan logga in.
+  return { ...data, members: data.members.filter(m => m.character && m.in_guild), role: byId(data.roles), fn: byId(data.functions), member: byId(data.members), group: byId(data.groups) };
 }
 
 function refresh() {
@@ -107,9 +107,10 @@ function dutiesOf(m) {
 
 /* ---------- byggstenar ---------- */
 // namn i klassfärg, pricken grön när personen är online på Discord
-const status = m => m.online ? "online på Discord" : "offline";
+// online skrivs av en ständigt uppkopplad bot, som inte finns än. Tills dess är ingen markerad, i stället för att alla ser offline ut.
+const status = m => m.online ? ", online på Discord" : "";
 const who = m => m ? `<button class="who${m.online ? " is-online" : ""}" style="--c:${CLASS_COLORS[m.class] ?? "#fff"}" data-member="${m.id}"
-  title="${esc(m.character)} är ${status(m)}" aria-label="${esc(m.character)}, ${status(m)}"><i class="who__dot" aria-hidden="true"></i>${esc(m.character)}</button>` : "";
+  title="${esc(m.character)}${status(m)}" aria-label="${esc(m.character)}${status(m)}"><i class="who__dot" aria-hidden="true"></i>${esc(m.character)}</button>` : "";
 const whos = ms => `<span class="whos">${ms.map(who).join("")}</span>`;
 const selfChip = rm => rm ? `<button class="who who--self${rm.online ? " is-online" : ""}" style="--c:${CLASS_COLORS[rm.class] ?? "#fff"}" data-member="${rm.id}"
   title="Ingen utsedd: Raid Master har det själv"><i class="who__dot" aria-hidden="true"></i>${esc(rm.character)}<small>Raid Master själv</small></button>` : "";
@@ -534,7 +535,7 @@ function memberDrawer(m) {
   const duties = dutiesOf(m);
   openDrawer(`<p class="eyebrow">${titles.length ? esc(titles.join(" · ")) : "Medlem"}</p>
     <h2 class="person-name" style="--c:${CLASS_COLORS[m.class] ?? "#fff"}">${esc(m.character)}</h2>
-    <p class="lead presence${m.online ? " is-online" : ""}"><i class="who__dot" aria-hidden="true"></i>${m.online ? "Online på Discord" : "Offline"}${m.discord ? ` · @${esc(m.discord)}` : ""}</p>
+    <p class="lead presence${m.online ? " is-online" : ""}"><i class="who__dot" aria-hidden="true"></i>${m.online ? "Online på Discord" : ""}${m.discord ? `${m.online ? " · " : ""}@${esc(m.discord)}` : ""}</p>
     ${me && me.id === m.id ? `<button class="btn btn--ghost btn--sm" data-profile style="margin-top:14px">Redigera min profil</button>` : ""}
     <p class="label">Ansvarar för</p>
     ${duties.length ? duties.map(([g, names]) => `<div class="duty"><a href="#grupp/${g.id}">${esc(g.name)}</a><p>${names.map(esc).join(" · ")}</p></div>`).join("")
@@ -991,6 +992,7 @@ async function start() {
   refresh(); bind(); route();
   loadDiscordCount();
   if (me && !me.character) profileDrawer();   // första inloggningen
+  if (me && !me.in_guild) toast("Du är inte med på guildens Discord-server än. Gå med, så syns du här.");
 }
 
 start().catch(err => {

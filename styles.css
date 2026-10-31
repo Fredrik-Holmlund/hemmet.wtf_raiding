@@ -1098,3 +1098,6 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .topbar.at-top:not(.is-open) .acct b, .topbar.at-top:not(.is-open) .acct small { text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
 .topbar.at-top:not(.is-open) .acct small { color: var(--text-primary); }
 @media (max-width: 480px) { .acct__text { display: none; } }
+
+/* pricken syns bara när någon är online: utan närvaro från boten vet vi inget om resten */
+.who:not(.is-online) .who__dot, .presence:not(.is-online) .who__dot { display: none; }
