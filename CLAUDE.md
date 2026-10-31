@@ -214,6 +214,12 @@ Reglerna sitter i `supabase/migrations`. Ändras de ska `perms.js` och `scripts/
   ingen behöver uppdatera på två ställen.
 - **Alla med ett Discord-konto kan logga in** och får en medlemsrad utan behörigheter, men visas bara om de är med på guildens server (`in_guild`).
 
+**Säkerhet (2026-10-31)**
+- Webbläsaren är aldrig skyddet: reglerna sitter i databasen. Allt som kommer ur databasen eller tavlans JSON escapas när det skrivs ut (`esc`), även id:n och värden i attribut.
+- `groups.links` skrivs bara av boten (service role); sidan har rätt till listade kolumner, så en ny kolumn i `groups` måste läggas till i grant-raderna (`20261031210000_hardare_regler.sql`).
+- Tavlor och mallar valideras i databasen (`board_is_valid`): id:n och färger har fast format.
+- `index.html` har en Content-Security-Policy. En ny extern adress för skript, bilder eller anrop måste läggas till där, annars blockeras den.
+
 ## Discord-boten (plan, inte byggd)
 
 En enda bot för allt som rör Discord. Den kräver backend: bot-token är hemlig och får aldrig ligga på den statiska sidan,

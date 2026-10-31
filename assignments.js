@@ -34,6 +34,7 @@ let dragging = null;  // { type: "player" | "slot" | "reorder", value }
 let renaming = null;  // "raid" | "col:<id>" | "row:<id>" | "add:<sektion>"
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+const safeColor = c => /^#[0-9a-f]{3,8}$/i.test(c ?? "") ? c : null;   // färgen hamnar i ett style-attribut
 const clone = x => structuredClone(x);
 const low = s => String(s ?? "").trim().toLowerCase();
 const esc = s => ctx.esc(s);
@@ -71,7 +72,7 @@ const templateRaid = t => t.data.tabs
 function playerInfo(name) {
   if (!name) return null;
   const r = board.roster.find(p => low(p.name) === low(name));
-  if (r) return { name: r.name, color: ctx.CLASS_COLORS[r.class] ?? r.color ?? "#fff", spec: r.spec };
+  if (r) return { name: r.name, color: ctx.CLASS_COLORS[r.class] ?? safeColor(r.color) ?? "#fff", spec: r.spec };
   const m = ctx.D.members.find(m => low(m.character) === low(name));
   return { name: m?.character ?? name, color: m ? ctx.CLASS_COLORS[m.class] ?? "#fff" : "#c9bfb5", spec: null };
 }
@@ -228,7 +229,7 @@ function pool(r) {
   const groups = [...new Set(left.map(p => p.group ?? 0))].sort((a, b) => a - b);
   return `<div class="bd__pool lfgpanel" ${canEdit() ? `data-drop="pool"` : ""}>
     <header class="lfgpanel__head"><h3>Inte placerade${canEdit() ? ` <small>dra till en rad</small>` : ""}</h3></header>
-    ${groups.map(n => `<div class="bd__poolrow"><span class="bd__grp">${n ? `Grupp ${n}` : "Utan grupp"}</span>
+    ${groups.map(n => `<div class="bd__poolrow"><span class="bd__grp">${n ? `Grupp ${esc(n)}` : "Utan grupp"}</span>
       ${left.filter(p => (p.group ?? 0) === n).map(p => {
         const info = playerInfo(p.name);
         return `<span class="pchip" style="--c:${info.color}" ${canEdit() ? `draggable="true" data-drag="${esc(p.name)}"` : ""}>${p.spec ? `<small>${esc(p.spec)}</small>` : ""}${esc(p.name)}</span>`;
@@ -256,37 +257,37 @@ function table(r, cols = r.columns) {
   const head = cols.map(c => { const i = r.columns.indexOf(c); return `<th class="bd__col">
     <div class="bd__colhead">
       ${edit ? `<span class="bd__colctl">
-        <button data-colmove="${c.id}" data-dir="-1" ${i === 0 ? "disabled" : ""} aria-label="Flytta vänster">←</button>
-        <button data-coldel="${c.id}" aria-label="Ta bort ${esc(c.name)}">✕</button>
-        <button data-colmove="${c.id}" data-dir="1" ${i === all - 1 ? "disabled" : ""} aria-label="Flytta höger">→</button></span>` : ""}
-      <button class="bd__colimg" data-img-one="${c.id}" title="Bild av ${esc(c.name)} till Discord" aria-label="Bild av ${esc(c.name)} till Discord">📷</button>
+        <button data-colmove="${esc(c.id)}" data-dir="-1" ${i === 0 ? "disabled" : ""} aria-label="Flytta vänster">←</button>
+        <button data-coldel="${esc(c.id)}" aria-label="Ta bort ${esc(c.name)}">✕</button>
+        <button data-colmove="${esc(c.id)}" data-dir="1" ${i === all - 1 ? "disabled" : ""} aria-label="Flytta höger">→</button></span>` : ""}
+      <button class="bd__colimg" data-img-one="${esc(c.id)}" title="Bild av ${esc(c.name)} till Discord" aria-label="Bild av ${esc(c.name)} till Discord">📷</button>
       ${renaming === `col:${c.id}`
-        ? `<input class="bd__nameinput" data-rename="col:${c.id}" value="${esc(c.name)}" maxlength="40" data-autofocus aria-label="Kolumnens namn">`
-        : `<span class="bd__colname" ${edit ? `data-startrename="col:${c.id}" title="Klicka för att byta namn"` : ""}>${esc(c.name)}</span>`}
+        ? `<input class="bd__nameinput" data-rename="col:${esc(c.id)}" value="${esc(c.name)}" maxlength="40" data-autofocus aria-label="Kolumnens namn">`
+        : `<span class="bd__colname" ${edit ? `data-startrename="col:${esc(c.id)}" title="Klicka för att byta namn"` : ""}>${esc(c.name)}</span>`}
       ${c.image ? `<img class="bd__boss" src="${esc(c.image)}" alt="" loading="lazy">` : `<span class="bd__noboss"></span>`}
     </div></th>`; }).join("");
   const body = r.sections.map(s => {
     const rows = s.rows.map((row, ri) => {
       const role = renaming === `row:${row.id}`
-        ? `<input class="bd__nameinput" data-rename="row:${row.id}" value="${esc(row.role)}" maxlength="30" data-autofocus aria-label="Roll">`
-        : `<span class="bd__rolename" ${edit ? `data-startrename="row:${row.id}" title="Klicka för att byta namn"` : ""}>${esc(row.role)}</span>`;
+        ? `<input class="bd__nameinput" data-rename="row:${esc(row.id)}" value="${esc(row.role)}" maxlength="30" data-autofocus aria-label="Roll">`
+        : `<span class="bd__rolename" ${edit ? `data-startrename="row:${esc(row.id)}" title="Klicka för att byta namn"` : ""}>${esc(row.role)}</span>`;
       const cells = cols.map(c => {
         const v = r.cells[row.id]?.[c.id] ?? "";
-        return `<td class="bd__cell${edit ? " is-editable" : ""}" ${edit ? `data-cell="${row.id}|${c.id}"` : ""}>${renderCell(v, r) || (edit ? `<span class="bd__ph">+</span>` : "")}</td>`;
+        return `<td class="bd__cell${edit ? " is-editable" : ""}" ${edit ? `data-cell="${esc(row.id)}|${esc(c.id)}"` : ""}>${renderCell(v, r) || (edit ? `<span class="bd__ph">+</span>` : "")}</td>`;
       }).join("");
-      return `<tr class="bd__row${ri % 2 ? " is-alt" : ""}" data-row="${row.id}" data-sec="${s.id}">
+      return `<tr class="bd__row${ri % 2 ? " is-alt" : ""}" data-row="${esc(row.id)}" data-sec="${esc(s.id)}">
         <th class="bd__role" scope="row"><span class="bd__rolecell">
-          ${edit ? `<span class="bd__grip" draggable="true" data-reorder="${row.id}" title="Dra för att flytta raden">⠿</span>` : ""}
+          ${edit ? `<span class="bd__grip" draggable="true" data-reorder="${esc(row.id)}" title="Dra för att flytta raden">⠿</span>` : ""}
           ${role}
-          ${edit ? `<button class="bd__x" data-rowdel="${row.id}" aria-label="Ta bort raden ${esc(row.role)}">✕</button>` : ""}</span></th>
-        <td class="bd__player${row.player ? " is-filled" : ""}" ${playerFill(row)} ${edit ? `data-drop-row="${row.id}"` : ""}>${slot(row, edit)}</td>
+          ${edit ? `<button class="bd__x" data-rowdel="${esc(row.id)}" aria-label="Ta bort raden ${esc(row.role)}">✕</button>` : ""}</span></th>
+        <td class="bd__player${row.player ? " is-filled" : ""}" ${playerFill(row)} ${edit ? `data-drop-row="${esc(row.id)}"` : ""}>${slot(row, edit)}</td>
         ${cells}${edit ? `<td class="bd__coladd"></td>` : ""}
       </tr>`;
     }).join("");
     const add = !edit ? "" : renaming === `add:${s.id}`
-      ? `<input class="bd__nameinput" data-rename="add:${s.id}" maxlength="30" value="${esc(nextRowName(s))}" placeholder="Rollnamn" data-autofocus data-select>`
-      : `<button class="bd__addrow" data-startrename="add:${s.id}">+ Lägg till rad</button>`;
-    return `<tr class="bd__sec bd__sec--${s.id}"><th colspan="2" scope="rowgroup">${esc(s.name)} <small>${s.rows.length} roller</small></th><td colspan="${n + (edit ? 1 : 0)}"></td></tr>
+      ? `<input class="bd__nameinput" data-rename="add:${esc(s.id)}" maxlength="30" value="${esc(nextRowName(s))}" placeholder="Rollnamn" data-autofocus data-select>`
+      : `<button class="bd__addrow" data-startrename="add:${esc(s.id)}">+ Lägg till rad</button>`;
+    return `<tr class="bd__sec bd__sec--${esc(s.id)}"><th colspan="2" scope="rowgroup">${esc(s.name)} <small>${s.rows.length} roller</small></th><td colspan="${n + (edit ? 1 : 0)}"></td></tr>
       ${rows}
       ${edit ? `<tr class="bd__add"><td colspan="2">${add}</td><td colspan="${n + 1}"></td></tr>` : ""}`;
   }).join("");
@@ -302,10 +303,10 @@ const playerFill = row => { const p = row.player && playerInfo(row.player); retu
 
 function slot(row, edit) {
   if (row.player) {
-    return `<span class="bd__slot">${chip(row.player, edit ? `draggable="true" data-slot="${row.id}" data-pick="${row.id}" title="Dra till en annan rad, eller klicka för att byta"` : "", true)}
-      ${edit ? `<button class="bd__x" data-clear="${row.id}" aria-label="Ta bort spelaren">✕</button>` : ""}</span>`;
+    return `<span class="bd__slot">${chip(row.player, edit ? `draggable="true" data-slot="${esc(row.id)}" data-pick="${esc(row.id)}" title="Dra till en annan rad, eller klicka för att byta"` : "", true)}
+      ${edit ? `<button class="bd__x" data-clear="${esc(row.id)}" aria-label="Ta bort spelaren">✕</button>` : ""}</span>`;
   }
-  return edit ? `<button class="bd__pick" data-pick="${row.id}">dra eller välj <span aria-hidden="true">⌄</span></button>` : `<span class="bd__nobody">-</span>`;
+  return edit ? `<button class="bd__pick" data-pick="${esc(row.id)}">dra eller välj <span aria-hidden="true">⌄</span></button>` : `<span class="bd__nobody">-</span>`;
 }
 
 // roll- och spelarnamn som inte får plats krymps i stället för att bryta raden ("Warlock 4" på två rader)
@@ -530,7 +531,7 @@ export function parseRaidHelper(text) {
     const sp = low(spec);
     const role = low(s.className) === "tank" || TANK.includes(sp) ? "tanks"
       : HEAL.includes(sp) ? "healers" : MELEE.includes(sp) ? "melee" : "ranged";
-    players.push({ name, class: cls, spec, role, group: Number(s.groupNumber) || null, color: s.color ?? null });
+    players.push({ name, class: cls, spec, role, group: Number(s.groupNumber) || null, color: safeColor(s.color) });
   }
   if (!players.length) throw new Error("Hittade inga spelare med namn i datan.");
   return players;
@@ -647,7 +648,7 @@ function imageDrawer(onlyCol = null) {
     <p class="label">Bossar</p>
     <div class="bd__colpick">
       <label class="bd__check bd__check--all"><input type="checkbox" data-img-all ${onlyCol ? "" : "checked"}> Alla</label>
-      ${r.columns.map(c => `<label class="bd__check"><input type="checkbox" data-img-col="${c.id}" ${!onlyCol || onlyCol === c.id ? "checked" : ""}> ${esc(c.name)}</label>`).join("")}
+      ${r.columns.map(c => `<label class="bd__check"><input type="checkbox" data-img-col="${esc(c.id)}" ${!onlyCol || onlyCol === c.id ? "checked" : ""}> ${esc(c.name)}</label>`).join("")}
     </div>
     <label class="bd__check"><input type="checkbox" data-img-hide checked> Dölj rader utan uppgifter</label>
     <div class="bd__imgprev" id="imgPrev"><p class="note">Ritar bilden …</p></div>
