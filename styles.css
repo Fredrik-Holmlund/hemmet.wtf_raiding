@@ -1012,6 +1012,7 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .grow__roles .role { width: 24px; height: 24px; background-size: 72px 24px; }
 .grow__roles .role--healer { background-position: -24px 0; }
 .grow__roles .role--dps { background-position: -48px 0; }
+.grow__roles .role--off { filter: grayscale(1) brightness(.5); opacity: .55; }   /* alla tre står alltid på samma plats, så att man kan läsa kolumnen nedåt */
 .grow__go { display: grid; place-items: center; font-size: 16px; color: var(--text-faint); transition: transform .12s, color .12s; }
 .grow:hover .grow__go { color: var(--gold-300); transform: translateX(2px); }
 .grow__main { min-width: 0; }

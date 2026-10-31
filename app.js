@@ -263,7 +263,8 @@ function groupListRow(g) {
       <small>${a ? `<span class="grow__amb">${esc(a.name)}</span>` : ""}${a && g.recruit_note ? " · " : ""}${esc(g.recruit_note ?? "")}</small></div>
     <div class="grow__rm">${rm ? who(rm) : "-"}<small>Raid Master</small></div>
     <div class="grow__time"><b>${esc(time || "-")}</b>${timeNote ? `<small title="${esc(timeNote)}">${esc(timeNote)}</small>` : ""}</div>
-    <div class="grow__roles">${hasRoom(g) ? roleIcons(g.recruit_roles) : ""}</div>
+    <div class="grow__roles">${Object.entries(ROLE_NAMES).map(([r, n]) => hasRoom(g) && g.recruit_roles?.includes(r) ? roleIcons([r])
+      : `<i class="role role--${r} role--off" title="Söker inte ${n}" aria-hidden="true"></i>`).join("")}</div>
     <div class="grow__signup"><span class="signup signup--${g.signup}" title="${esc(signup.hint)}"><span>${signup.name}</span></span></div>
     <span class="grow__go">${icon("chevron-right")}</span>
   </article>`;
