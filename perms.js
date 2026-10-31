@@ -25,6 +25,9 @@ export const can = {
   // assignment-tavlan: ledningen, gruppens Raid Master och den som har funktionen "Assignments & taktik"
   editAssignments: (me, g, assignments) => isLeadership(me) || (!!me && assignments.some(a =>
     a.group_id === g.id && a.member_id === me.id && (a.slot === "raid_master" || a.slot === "assignments"))),
+  // bilden av tavlan till gruppens tråd på Discord: ledningen, gruppens Raid Master, Raid Leader och Roster & uttagning
+  postAssignments: (me, g, assignments) => isLeadership(me) || (!!me && assignments.some(a =>
+    a.group_id === g.id && a.member_id === me.id && ["raid_master", "leadership", "roster"].includes(a.slot))),
   // mallar: alla som får redigera assignments någonstans kan spara och använda dem
   saveTemplate: (me, assignments) => isLeadership(me) || (!!me && assignments.some(a =>
     a.member_id === me.id && (a.slot === "raid_master" || a.slot === "assignments"))),

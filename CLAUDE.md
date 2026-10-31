@@ -7,7 +7,7 @@ för roller, rolltexter och de sex funktionerna. Inspiration: lootwatch.lazsarus
 
 **Status (2026-10-31):** live-sidan byggs här, med Supabase och Discord-inloggning. All demo är borttagen: inga exempelmedlemmar,
 ingen demo-inloggning, ingen localStorage-data. Supabase-projektet `dlpzoncjgsegjjkumomo` är uppsatt med båda migrationerna och
-Discord som enda inloggning. Inloggning, profil och rollhämtning från Discord (`sync-discord-roles`, boten) fungerar på riktigt. Schemat var 15:e minut (Cron) och att skapa grupper mot riktig databas är inte provat än. Sidan ligger live på https://raiding.hemmet.wtf (GitHub Pages från `main`).
+Discord som enda inloggning. Inloggning, profil och rollhämtning från Discord (`sync-discord-roles`, boten) fungerar på riktigt. Grupper, tavlan, trådar och rollschemat fungerar också. Sidan ligger live på https://raiding.hemmet.wtf (GitHub Pages från `main`).
 
 **Läs [CONTRIBUTING.md](CONTRIBUTING.md) först: där står hur vi jobbar i repot, och reglerna gäller även AI.**
 Uppsättningen står i [docs/SETUP.md](docs/SETUP.md).
@@ -47,7 +47,7 @@ Preview-konfigurationen heter `raiding` (port 5174).
 Flera sidor (hash-adresser, så att det fungerar som statisk sida). Headern är byggd som på hemmet.wtf, genomskinlig över heron,
 men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Loggan leder till hemmet.wtf.
 
-- **Översikt** `#start`: hero som på hemmet.wtf med egen bild (`assets/hero.webp`), glöd (`embers.js`) och *Vi ses i raiden.* Tre siffror i stället för
+- **Översikt** `#start`: hero som på hemmet.wtf med egen bild (`assets/hero.webp`), glöd (`embers.js`) och *Vi håller rent i Azeroth.* Tre siffror i stället för
   nedräkningen: raidgrupper, öppna för signups och i hemmet (medlemmar på Discord, från den publika inbjudningslänken). Rullbandet visar veckans raids totalt och per veckodag
   (`raid_days` på aktiva grupper, en raid per grupp och dag; bara dagar med raids). Under det grupperna per nivå (A/B/C + koderna).
   **Förklaringarna hör inte hit:** "Ordning i hemmet" och *Hitta ditt rum* finns inte på live-sidan. `#raidgrupper/soker` öppnar listan filtrerad.
@@ -171,6 +171,8 @@ En tavla per raidgrupp, sparad som ett JSON-dokument (`assignment_boards.data`):
   *Kopiera bild* lägger PNG i urklipp (Ctrl+V i Discord), *Ladda ner* som reserv. Urklipp kräver ett riktigt klick i Chrome/Edge;
   Claude-appens webbläsarpanel nekar urklipp helt, så kopieringen är inte verifierad där. Senare: *Skicka till Discord*
   via boten (se *Discord-boten*).
+- **Skicka till tråden** (i samma dialog): ledningen och gruppens Raid Master, Raid Leader och Roster & uttagning (`can.postAssignments`, edge function
+  `post-assignments`) skickar bilden till gruppens tråd. Varje skickning blir ett nytt inlägg utan text och pingar ingen.
 - Tavlan sparas 300 ms efter senaste ändringen, hela dokumentet varje gång. **Redigerar två personer samtidigt vinner den som sparar sist.**
 - **Mallar** är en raid utan spelarnamn, gemensamma för guilden. *Lägg till som raid* (i Mallar eller + Raid), *Spara … som mall*.
 - Äldre sparat format (flikar med gemensamma rader) konverteras automatiskt (`migrate()` i assignments.js).
@@ -245,7 +247,6 @@ så allt går via Supabase (edge functions med service role).
 ## Idéer och nästa steg
 
 **Närmast**
-- Sätt upp Cron för `sync-discord-roles` och testa att skapa en grupp och en tavla på riktigt.
 - Varning när man lämnar redigeringen med osparade ändringar.
 - Skydd mot att två personer skriver över varandras ändringar på tavlan.
 

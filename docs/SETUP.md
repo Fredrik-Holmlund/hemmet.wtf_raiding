@@ -79,6 +79,13 @@ första inlägg. Forumen hittas på namnet, så de måste heta exakt så.
 
 Finns ingen tråd på en grupp har gruppens sida knappen *Skapa tråd på Discord*.
 
+## 5c. Assignments till Discord
+
+Under *Bild till Discord* på tavlan kan ledningen och gruppens Raid Master, Raid Leader och Roster & uttagning skicka bilden till gruppens tråd.
+
+1. Lägg upp funktionen `post-assignments` på samma sätt, med **Verify JWT** avstängt.
+2. Ge boten **Bifoga filer** i de tre forumen.
+
 ## 6. Publicera på raiding.hemmet.wtf
 
 1. I repots Settings → Pages: publicera från `main`, mappen `/`.

@@ -11,7 +11,7 @@
    Den som får redigera gör det direkt, utan redigeringsläge: klick på en ruta öppnar en liten editor.
    I rutorna blir roller ("MT", "Healer 1") och spelarnamn brickor, och {skull} … {star} / {rt1}-{rt8} spelets markeringar. */
 
-import { saveBoard, saveTemplate, deleteTemplate } from "./data.js";
+import { saveBoard, saveTemplate, deleteTemplate, postAssignments } from "./data.js";
 import { can } from "./perms.js";
 import { boardImage } from "./boardImage.js";
 
@@ -641,8 +641,9 @@ function imageDrawer(onlyCol = null) {
   const r = raid();
   if (!r) return;
   imgBlob = null;
+  const mayPost = can.postAssignments(ctx.me, ctx.g, ctx.D.assignments), thread = ctx.g.links?.thread;
   ctx.openDrawer(`<p class="eyebrow">Bild till Discord</p><h2>${esc(r.name)}</h2>
-    <p class="lead">Kopiera bilden och klistra in den i Discord med Ctrl+V.</p>
+    <p class="lead">${mayPost && thread ? "Skicka bilden till gruppens tråd, eller kopiera den och klistra in den med Ctrl+V." : "Kopiera bilden och klistra in den i Discord med Ctrl+V."}</p>
     <p class="label">Bossar</p>
     <div class="bd__colpick">
       <label class="bd__check bd__check--all"><input type="checkbox" data-img-all ${onlyCol ? "" : "checked"}> Alla</label>
@@ -651,9 +652,11 @@ function imageDrawer(onlyCol = null) {
     <label class="bd__check"><input type="checkbox" data-img-hide checked> Dölj rader utan uppgifter</label>
     <div class="bd__imgprev" id="imgPrev"><p class="note">Ritar bilden …</p></div>
     <div class="facts">
-      <button class="btn btn--primary" data-bd="imgcopy">Kopiera bild</button>
+      ${mayPost && thread ? `<button class="btn btn--primary" data-bd="imgpost">Skicka till tråden</button>` : ""}
+      <button class="btn ${mayPost && thread ? "btn--ghost" : "btn--primary"}" data-bd="imgcopy">Kopiera bild</button>
       <button class="btn btn--ghost" data-bd="imgdl">Ladda ner</button>
     </div>
+    ${mayPost && !thread ? `<p class="note" style="margin-top:10px">Gruppen har ingen tråd än. Skapa den på gruppens sida, så går bilden att skicka härifrån.</p>` : ""}
     <p class="note" id="imgMsg" role="status" style="margin-top:10px"></p>`);
   updateImage();
 }
@@ -702,6 +705,21 @@ async function copyImage() {
   }
 }
 
+async function postImage(btn) {
+  const msg = document.getElementById("imgMsg");
+  if (!imgBlob) { msg.textContent = "Bilden ritas fortfarande, försök igen om en sekund."; return; }
+  btn.disabled = true;
+  msg.textContent = "Skickar …";
+  try {
+    const url = await postAssignments(ctx.g.id, imgBlob);
+    msg.innerHTML = `Skickad! <a href="${esc(url)}" target="_blank" rel="noopener">Öppna i Discord</a>`;
+  } catch (err) {
+    console.error(err);
+    msg.textContent = `Bilden kunde inte skickas: ${err.message}`;
+  }
+  btn.disabled = false;
+}
+
 function downloadImage() {
   if (!imgBlob) return;
   const a = document.createElement("a");
@@ -725,6 +743,7 @@ export function bindAssignments() {
     if (d.bd === "templates") return templatesDrawer();
     if (d.bd === "image") return imageDrawer();
     if (d.imgOne) return imageDrawer(d.imgOne);
+    if (d.bd === "imgpost") return postImage(t);
     if (d.bd === "imgcopy") return copyImage();
     if (d.bd === "imgdl") return downloadImage();
     if (d.bd === "closedrawer") return ctx.closeDrawer();
@@ -741,7 +760,7 @@ export function bindAssignments() {
     if (d.popMk) return insertAtCursor(pop.el.querySelector("[data-pop-text]"), `{${d.popMk}}`);
     if (d.pickName !== undefined && pop?.el.dataset.row) return place(d.pickName, pop.el.dataset.row);
     if (d.pickFree && pop?.el.dataset.row) return place(d.pickFree, pop.el.dataset.row);
-    if (d.cell) return cellEditor(t);
+    if (d.cell && t !== pop?.el) return cellEditor(t);   // editorn har samma attribut: klick i den ska inte öppna den igen
     if (d.pick) return playerPicker(t, d.pick);
     if (d.clear) { const row = rowsOf(raid()).find(x => x.id === d.clear); if (row) row.player = null; return save(); }
     // raider
