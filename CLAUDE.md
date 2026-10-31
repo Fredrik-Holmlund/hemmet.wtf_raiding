@@ -52,13 +52,10 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
   (`raid_days` på aktiva grupper, en raid per grupp och dag; bara dagar med raids). Under det grupperna per nivå (A/B/C + koderna).
   **Förklaringarna hör inte hit:** "Ordning i hemmet" och *Hitta ditt rum* finns inte på live-sidan. `#raidgrupper/soker` öppnar listan filtrerad.
 - **Undersidorna** Raidgrupper och Roller & ansvar har en lägre banderoll med samma bild och genomskinlig meny (`.subhero`). Gruppens egna sidor har ingen bild.
-- **Raidgrupper** `#raidgrupper`: korten under rubrikerna 40-manna, 20-manna och 10-manna. Överst filter (2026-10-12): storlek,
-  dagar (flera val = någon av dem), starttid (före 19, 19–21, 21 och senare), *Söker* tank/healer/DPS (grupper med plats som behöver rollen) och "Bara grupper som är öppna för signups", med
-  "Visar N av M" och *Rensa filtren*. Ny grupp-korten döljs medan man filtrerar. Ledningen ser "+ Ny 40-mannagrupp" osv. sist under varje rubrik (`#ny-grupp/40`, storleken förvald), tomma
-  rubriker och *Borttagna grupper*.
+- **Raidgrupper** `#raidgrupper`: en lista med ett kort på längden per grupp: nivå, Raid Master, nästa raid, rollerna (alla tre visas, de som inte söks är gråa), signups (beslut 2026-10-31: korten ska gå att skumma när grupperna blir många). Överst en verktygsrad som följer med vid
+  scroll: flikarna Alla, 40, 20, 10, filtermenyerna Dagar (flera val = någon av dem), *Söker* tank/healer/DPS (grupper med plats som behöver rollen) och Start (före 19, 19–21, 21 och senare), *Bara öppna* och
+  *Rensa*. Valda filter står i menyknappen. Ledningen ser *Ny grupp* i verktygsraden (`#ny-grupp/40`, storleken från fliken) och *Borttagna grupper*. Fulla grupper tonas ned, nivåns färg tonar in från kortets vänsterkant; koden står som färgad text utan kapsel, här och på gruppens sida och Översikt. Infoikonen vid namnet visar *Om gruppen* och texten om rostern (hovring, eller klick på skärm utan mus).
 - **Roller & ansvar** `#roller`: de fem rollerna, de sex funktionerna, ambitionsnivåerna och *Vem håller i nycklarna?* (hierarkin med bara titlar, klickbara, och Raid Masterns stadgar med korta texter ur `functions.summary`).
-- **Raidgruppskorten** ser ut som spelets Group Finder (panelen med äventyrarna, `assets/lfg-panel.webp`, samma som gruppsöket
-  på leveling-sidan), inte achievement-pergament: pergamentet betyder resultat och utmärkelser enligt formspråket.
 - **Signups** (hette Rekrytering; "rekrytering" gäller guilden, inte en grupp, beslut 2026-10-12) har tre lägen (`groups.signup`):
   **Öppet** (`open`, signa direkt i tråden), **Hör av dig** (`ask`, prata med Raid Master först) och **Fullt hus** (`full`, ingen
   plats just nu, i rött `#e5533d`). Medvetet inga negativa ord som "Stängd" eller "Selektiv". Vid Öppet och Hör av dig visas vilka roller rostern
@@ -234,8 +231,8 @@ så allt går via Supabase (edge functions med service role).
   `supabase/functions/post-assignments`.
 - Funktionen kontrollerar behörigheten med samma regel som RLS (`can_edit_board(group_id)`) och postar via boten.
 - **Kanalupplägg (ledningens text 2026-10-12):** forumkanaler för 10-, 20- och 40-mannaraids, där **varje grupp har en egen
-  tråd** med information, diskussioner och signups. Grupperna har inga egna kanaler. Boten postar i gruppens tråd; tråden
-  anges som länk i gruppens formulär (`links.thread`, "Gruppens tråd på Discord"), och tråd-id:t tas ur länken.
+  tråd** med information, diskussioner och signups. Grupperna har inga egna kanaler. Boten postar i gruppens tråd; länken
+  (`links.thread`) sätts bara av boten och går inte att redigera på sidan, och tråd-id:t tas ur länken.
 - **Valfri ping** av de som står på tavlan: Raid-Helper-exporten har allas Discord-id (`userId`). Spara det i compen vid import
   (görs inte i dag) så kan boten nämna exakt rätt personer.
 
@@ -288,8 +285,9 @@ Uppkomna under arbetet:
 
 Samma regler som leveling-sidan. Se README.md i `C:\JOBB\Wow Forever\Hemmet - Levelingresa` under "Formspråket".
 Tillägg för ledningssidan (beslut 2026-10-12):
+- **Ikoner:** Lucide för gränssnittet (beslut 2026-10-31), en i taget som SVG i `icons.js`, inget paket och inget byggsteg. Spelets egna ikoner behålls där de betyder något i spelet, som rollerna.
 - **Spelets Group Finder-panel** (`assets/lfg-panel.webp`: äventyrarna på klippan, svart kant, tunn guldlinje, mörk rubriklist,
-  listrader) är stilen för raidgrupper och organisation: raidgruppskorten, gruppens sida, nivåpanelerna och hierarkin på startsidan.
+  listrader) är stilen för raidgrupper och organisation: gruppens sida, nivåpanelerna och hierarkin på startsidan.
 - **Pergament = utmärkelser och guildens stadgar.** De sex uppgifterna på startsidan är "Raid Masterns stadgar" ("Det här ska
   alltid bli gjort i varje raidgrupp"); samma romerska siffror I–VI används på Roller & ansvar: ljust pergament
   (`assets/parchment.webp`, den blekare nedre halvan för läsbarheten) med mörkt bläck direkt på pergamentet, romerska

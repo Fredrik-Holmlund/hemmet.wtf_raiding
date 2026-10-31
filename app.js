@@ -1,3 +1,4 @@
+import { icon } from "./icons.js";
 import { configured, getSession, currentMemberId, syncRoles, syncThread, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
 import { can, isLeadership } from "./perms.js";
 import { renderAssignments, drawBoard, bindAssignments } from "./assignments.js";
@@ -18,11 +19,24 @@ const NUM = n => `<span class="n">${n}</span>`;
 const DAYS = [["mon", "mån"], ["tue", "tis"], ["wed", "ons"], ["thu", "tor"], ["fri", "fre"], ["sat", "lör"], ["sun", "sön"]];
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 // "Ons & sön · 19:30", "Mån, ons & fre · 20:00", eller fritexten om det inte finns dagar
-function scheduleText(g) {
+function dayList(g) {
   const days = DAYS.filter(([k]) => g.raid_days?.includes(k)).map(([, v]) => v);
-  const list = days.length > 1 ? `${days.slice(0, -1).join(", ")} & ${days.at(-1)}` : days[0] ?? "";
-  const parts = [cap(list), g.raid_start].filter(Boolean).join(" · ");
-  const note = g.schedule_note;
+  return cap(days.length > 1 ? `${days.slice(0, -1).join(", ")} & ${days.at(-1)}` : days[0] ?? "");
+}
+const scheduleTime = g => [dayList(g), g.raid_start].filter(Boolean).join(" · ");
+// nästa raid räknat från nu: "Mån 18:00". Har dagens raid redan börjat gäller nästa.
+function nextRaid(g) {
+  if (!g.raid_days?.length) return g.raid_start ?? "";
+  const now = new Date(), today = (now.getDay() + 6) % 7, clock = now.toTimeString().slice(0, 5);
+  const wait = d => {
+    const n = (DAYS.findIndex(([k]) => k === d) - today + 7) % 7;
+    return n === 0 && g.raid_start && g.raid_start <= clock ? 7 : n;
+  };
+  const day = [...g.raid_days].sort((a, b) => wait(a) - wait(b))[0];
+  return [cap(DAYS.find(([k]) => k === day)[1]), g.raid_start].filter(Boolean).join(" ");
+}
+function scheduleText(g) {
+  const parts = scheduleTime(g), note = g.schedule_note;
   return [parts, parts && note ? `(${note})` : note].filter(Boolean).join(" ");
 }
 const RECRUIT_WORDS = 50;
@@ -202,6 +216,8 @@ function levelPanels() {
 /* ---------- vy B: raidgrupperna ---------- */
 // filtren på Raidgrupper: storlek, dagar, starttid och signups (flera val = någon av dem)
 const gfilter = { sizes: new Set(), days: new Set(), time: "", open: false, roles: new Set() };   // open: Öppet och Hör av dig räknas båda som öppna
+const setInfo = (el, on) => { el.classList.toggle("is-open", on); el.querySelector("button").setAttribute("aria-expanded", on); };
+let openDrop = null;   // vilken filtermeny som är öppen: listan ritas om vid varje val
 const TIME_SLOTS = [["early", "Före 19:00"], ["mid", "19:00-20:59"], ["late", "21:00 och senare"]];
 const timeSlot = t => { if (!t) return null; const m = +t.slice(0, 2) * 60 + +t.slice(3, 5); return m < 19 * 60 ? "early" : m < 21 * 60 ? "mid" : "late"; };
 const filterActive = () => gfilter.sizes.size || gfilter.days.size || gfilter.time || gfilter.open || gfilter.roles.size;
@@ -229,60 +245,65 @@ const recruitRow = g => {
   return `<span class="signup signup--${g.signup}" title="${esc(s.hint + need)}"><span>${s.name}</span>${roles}</span>`;
 };
 
-function groupCard(g) {
-  const ten = !isOrganized(g);
-  const rm = raidMaster(g), rl = raidLeader(g);
-  const row = (label, value) => `<div class="lfgcard__row"><dt>${label}</dt><dd>${value}</dd></div>`;
-  return `<article class="gcard lfgcard" data-group="${g.id}" tabindex="0" role="link" aria-label="Öppna ${esc(g.name)}">
-    <header class="lfgcard__head">
-      <b>${esc(g.name)}</b>${codeTag(g)}
-      <span class="lfgcard__size">${NUM(g.size)}-manna</span>
-    </header>
-    <dl class="lfgcard__rows">
-      ${row("Raid Master", rm ? who(rm) : "-")}${ten ? "" : row("Raid Leader", rl.length ? whos(rl) : "-")}${row("Nivå", ambitionBtn(g.ambition))}
-      ${row("Tid", esc(scheduleText(g) || "-"))}
-      ${row("Signups", recruitRow(g))}
-    </dl>
-    ${g.recruit_note ? `<p class="lfgcard__note">${esc(g.recruit_note)}</p>` : ten && g.blurb ? `<p class="lfgcard__note lfgcard__note--plain">${esc(g.blurb)}</p>` : ""}
-    <footer class="lfgcard__foot">
-      <span>${ten ? "" : `<b>${NUM(delegatedCount(g))}</b> av ${NUM(D.functions.length)} funktioner delegerade`}</span>
-      <span class="btn btn--primary btn--sm">Öppna</span>
-    </footer>
+// en rad per grupp: tabellen ska gå att läsa uppifrån och ned, och full grupp tonas ned så att de öppna syns först
+const infoIcon = (label, rows) => `<span class="ginfo" data-ginfo>
+  <button type="button" aria-label="${esc(label)}" aria-expanded="false">${icon("info")}</button>
+  <span class="ginfo__pop" role="tooltip">${rows.map(([title, text]) => `<b>${title}</b><span>${esc(text)}</span>`).join("")}</span>
+</span>`;
+
+function groupListRow(g) {
+  const a = amb(g.ambition), rm = raidMaster(g);
+  const about = [["Om gruppen", g.blurb], ["Rostern", g.recruit_note]].filter(([, text]) => text);
+  const signup = SIGNUP[g.signup] ?? SIGNUP.full, time = nextRaid(g);
+  const timeNote = [g.raid_days?.length > 1 ? dayList(g) : "", g.schedule_note].filter(Boolean).join(" · ");
+  return `<article class="grow${hasRoom(g) ? "" : " grow--full"}" data-group="${g.id}" tabindex="0" role="link" aria-label="Öppna ${esc(g.name)}"${a ? ` style="--q:${a.color}"` : ""}>
+    <span class="grow__code">${codeTag(g)}</span>
+    <div class="grow__main">
+      <div class="grow__name"><b>${esc(g.name)}</b>${about.length ? infoIcon(`Om ${g.name}`, about) : ""}</div>
+      ${a ? `<small class="grow__amb">${esc(a.name)}</small>` : ""}</div>
+    <div class="grow__rm">${rm ? who(rm) : "-"}<small>Raid Master</small></div>
+    <div class="grow__time"><b>${esc(time || "-")}</b>${timeNote ? `<small>${esc(timeNote)}</small>` : ""}</div>
+    <div class="grow__roles">${Object.entries(ROLE_NAMES).map(([r, n]) => hasRoom(g) && g.recruit_roles?.includes(r) ? roleIcons([r])
+      : `<i class="role role--${r} role--off" title="Söker inte ${n}" aria-hidden="true"></i>`).join("")}</div>
+    <div class="grow__signup"><span class="signup signup--${g.signup}" title="${esc(signup.hint)}"><span>${signup.name}</span></span></div>
+    <span class="grow__go">${icon("chevron-right")}</span>
   </article>`;
 }
 
 function renderGroups() {
   const all = activeGroups();
   const active = all.filter(passes);
-  const create = can.createGroup(me) && !filterActive();
-  const chip = (attr, value, label, on) => `<button class="fchip" ${attr}="${value}" aria-pressed="${on}">${label}</button>`;
-  $("#groupFilter").innerHTML = `<div class="gfilters">
-    <div class="gfilters__row"><span class="gfilters__label">Storlek</span>${[40, 20, 10].map(n => chip("data-fsize", n, `${NUM(n)}-manna`, gfilter.sizes.has(n))).join("")}</div>
-    <div class="gfilters__row"><span class="gfilters__label">Dagar</span>${DAYS.map(([k, v]) => chip("data-fday", k, cap(v), gfilter.days.has(k))).join("")}</div>
-    <div class="gfilters__row"><span class="gfilters__label">Söker</span>${Object.entries(ROLE_NAMES).map(([k, v]) => chip("data-frole", k, `${roleIcons([k], "fchip__role")}${v}`, gfilter.roles.has(k))).join("")}</div>
-    <div class="gfilters__row"><span class="gfilters__label">Start</span>${TIME_SLOTS.map(([k, v]) => chip("data-ftime", k, v, gfilter.time === k)).join("")}</div>
-    <div class="gfilters__row gfilters__foot">
-      <label class="bd__check"><input type="checkbox" data-only-open ${gfilter.open ? "checked" : ""}> Bara grupper som är öppna för signups</label>
-      <span class="gfilters__count">Visar ${NUM(active.length)} av ${NUM(all.length)}</span>
-      ${filterActive() ? `<button class="linkish" data-filter-reset>Rensa filtren</button>` : ""}
-    </div>
+  const size = [...gfilter.sizes][0];
+  const tab = (value, label, count) => `<button class="gtab" data-fsize="${value}" aria-pressed="${value === "all" ? !size : size === value}">${label}<small>${NUM(count)}</small></button>`;
+  const option = (attr, value, label, on) => `<button class="fchip" ${attr}="${value}" aria-pressed="${on}">${label}${on ? icon("check") : ""}</button>`;
+  const drop = (key, label, picked, options) => `<details class="fdrop${picked ? " is-set" : ""}" ${openDrop === key ? "open" : ""}>
+    <summary data-fdrop="${key}">${label}${picked ? `<b>${esc(picked)}</b>` : ""}${icon("chevron-down")}</summary>
+    <div class="fdrop__menu">${options}</div>
+  </details>`;
+  const shortDay = k => cap(DAYS.find(([d]) => d === k)[1]);
+  $("#groupFilter").innerHTML = `<div class="gbar">
+    <div class="gtabs" role="group" aria-label="Storlek">${tab("all", "Alla", all.length)}${[40, 20, 10].map(n => tab(n, NUM(n), all.filter(g => g.size === n).length)).join("")}</div>
+    ${drop("days", "Dagar", DAYS.filter(([k]) => gfilter.days.has(k)).map(([k]) => shortDay(k)).join(", "),
+      DAYS.map(([k, v]) => option("data-fday", k, cap(v), gfilter.days.has(k))).join(""))}
+    ${drop("roles", "Söker", Object.entries(ROLE_NAMES).filter(([k]) => gfilter.roles.has(k)).map(([, v]) => v).join(", "),
+      Object.entries(ROLE_NAMES).map(([k, v]) => option("data-frole", k, `${roleIcons([k], "fchip__role")}${v}`, gfilter.roles.has(k))).join(""))}
+    ${drop("time", "Start", TIME_SLOTS.find(([k]) => k === gfilter.time)?.[1] ?? "",
+      TIME_SLOTS.map(([k, v]) => option("data-ftime", k, v, gfilter.time === k)).join(""))}
+    <label class="gswitch"><input type="checkbox" data-only-open ${gfilter.open ? "checked" : ""}><span>Bara öppna</span></label>
+    ${filterActive() ? `<button class="linkish" data-filter-reset>Rensa</button>` : ""}
+    ${can.createGroup(me) ? `<a class="btn btn--primary btn--sm gbar__new" href="#ny-grupp/${size ?? 40}">${icon("plus")}Ny grupp</a>` : ""}
   </div>`;
-  $("#groups").innerHTML = SIZE_SECTIONS.map(({ size, note }) => {
+  const sections = SIZE_SECTIONS.map(({ size: n }) => {
     // efter kod (A1, A2, B1 …), grupper utan kod sist i bokstavsordning
-    const gs = active.filter(g => g.size === size).sort((a, b) =>
+    const gs = active.filter(g => g.size === n).sort((a, b) =>
       (a.raid_id ?? "~").localeCompare(b.raid_id ?? "~", "sv", { numeric: true }) || a.name.localeCompare(b.name, "sv"));
-    if (!gs.length && !create) return "";   // tom rubrik visas bara för den som kan skapa en grupp där (och inte när man filtrerar)
-    if (gfilter.sizes.size && !gfilter.sizes.has(size)) return "";
-    return `<section class="gsec" aria-labelledby="gsec${size}">
-      <h2 class="gsec__h" id="gsec${size}"><span>${NUM(size)}-manna</span> <small>${gs.length ? `${NUM(gs.length)} ${gs.length === 1 ? "grupp" : "grupper"}` : "inga grupper än"}</small></h2>
-      ${note ? `<p class="note gsec__note">${note}</p>` : ""}
-      <div class="gcards">
-        ${gs.map(groupCard).join("")}
-        ${create ? `<a class="gcard gcard--new" href="#ny-grupp/${size}"><span class="gcard__plus">+</span><span class="gcard__name">Ny ${NUM(size)}-mannagrupp</span>
-          <span class="gcard__meta">Starta en grupp och utse Raid Master</span></a>` : ""}
-      </div>
+    if (!gs.length) return "";
+    return `<section class="gsec" aria-label="${n}-manna">
+      <div class="gsec__h"><h2>${NUM(n)}<small>man</small></h2><span>${NUM(gs.length)} ${gs.length === 1 ? "grupp" : "grupper"}</span></div>
+      ${gs.map(groupListRow).join("")}
     </section>`;
-  }).join("") || `<p class="note">${filterActive() ? "Ingen grupp matchar filtren. Prova att rensa något, eller fråga i Discord: det brukar finnas plats." : "Inga raidgrupper än."}</p>`;
+  }).join("");
+  $("#groups").innerHTML = sections || `<p class="note">${filterActive() ? "Ingen grupp matchar filtren. Prova att rensa något, eller fråga i Discord: det brukar finnas plats." : "Inga raidgrupper än."}</p>`;
 
   // borttagna grupper syns bara för ledningen, som kan ångra eller radera för gott
   const removed = can.removeGroup(me) ? D.groups.filter(g => g.status === "archived") : [];
@@ -698,7 +719,10 @@ function renderEditor() {
       <div class="ed__col">
         <fieldset class="ed__box"><legend>Vem ansvarar för vad</legend><div id="staffBox">${staffEditor()}</div></fieldset>
         <fieldset class="ed__box"><legend>Discord</legend>
-          ${field("link_thread", "Gruppens tråd på Discord", g.links?.thread, 'type="url" placeholder="https://discord.com/channels/…"')}
+          <div class="field"><span>Gruppens tråd på Discord</span>
+            ${g.links?.thread ? `<a class="btn btn--ghost btn--sm ed__thread" href="${esc(g.links.thread)}" target="_blank" rel="noopener">Öppna tråden</a>` : ""}
+            <small>${g.links?.thread ? "Boten uppdaterar tråden när gruppen sparas." : isNew ? "Boten skapar tråden när gruppen skapas." : "Gruppen har ingen tråd än. Skapa den från gruppens sida."}</small>
+          </div>
         </fieldset>
       </div>
     </div>
@@ -725,12 +749,6 @@ async function saveDraft(form) {
   if (!draft.slots.raid_master.length) errors.push("Gruppen behöver en Raid Master.");
   if (words(val("recruit_note")) > RECRUIT_WORDS) errors.push(`Texten om rostern får vara högst ${RECRUIT_WORDS} ord (nu ${words(val("recruit_note"))}).`);
   if (val("raid_start") && !/^([01]\d|2[0-3]):[0-5]\d$/.test(val("raid_start"))) errors.push("Starttiden ska skrivas som TT:MM, t.ex. 19:30.");
-  const links = {};
-  for (const k of Object.keys(LINK_NAMES)) {
-    const v = val(`link_${k}`);
-    if (v && !/^https:\/\/\S+$/i.test(v)) errors.push(`Länken till ${LINK_NAMES[k]} ska börja med https://`);
-    links[k] = v || null;
-  }
   if (errors.length) {
     const box = $("#edError");
     box.innerHTML = errors.map(e => `<p>${esc(e)}</p>`).join("");
@@ -747,7 +765,7 @@ async function saveDraft(form) {
         : nextCode(val("ambition"), size, g.id), raid_days: fd.getAll("raid_days"), raid_start: val("raid_start") || null, schedule_note: val("schedule_note") || null,
       blurb: val("blurb") || null, details: val("details") || null,
       signup: val("signup") || "open", recruit_note: val("recruit_note") || null,
-      recruit_roles: val("signup") !== "full" ? fd.getAll("recruit_roles") : [], links });
+      recruit_roles: val("signup") !== "full" ? fd.getAll("recruit_roles") : [] });
     if (can.editStructure(me)) await setSlot(saved.id, "raid_master", draft.slots.raid_master);
     // funktionerna bemannas bara i 20- och 40-manna; blir gruppen 10-manna töms de (storleken ändras bara av ledningen)
     for (const f of D.functions) await setSlot(saved.id, f.id, size >= 20 ? draft.slots[f.id] : []);
@@ -831,16 +849,22 @@ function route() {
 
 function bindFilters() {
   document.addEventListener("click", e => {
+    const summary = e.target.closest("[data-fdrop]");
+    if (summary) { e.preventDefault(); openDrop = openDrop === summary.dataset.fdrop ? null : summary.dataset.fdrop; return renderGroups(); }
     const t = e.target.closest("[data-fsize],[data-fday],[data-ftime],[data-frole],[data-filter-reset]");
-    if (!t) return;
+    if (!t) {
+      if (openDrop && !e.target.closest(".fdrop")) { openDrop = null; renderGroups(); }
+      return;
+    }
     const toggle = (set, v) => { if (set.has(v)) set.delete(v); else set.add(v); };
-    if (t.dataset.fsize) toggle(gfilter.sizes, +t.dataset.fsize);
+    if (t.dataset.fsize) { gfilter.sizes.clear(); if (t.dataset.fsize !== "all") gfilter.sizes.add(+t.dataset.fsize); }
     if (t.dataset.fday) toggle(gfilter.days, t.dataset.fday);
     if (t.dataset.frole) toggle(gfilter.roles, t.dataset.frole);
     if (t.dataset.ftime) gfilter.time = gfilter.time === t.dataset.ftime ? "" : t.dataset.ftime;
     if (t.hasAttribute("data-filter-reset")) { gfilter.sizes.clear(); gfilter.days.clear(); gfilter.time = ""; gfilter.open = false; gfilter.roles.clear(); }
     renderGroups();
   });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && openDrop) { openDrop = null; renderGroups(); } });
 }
 
 function bind() {
@@ -892,6 +916,10 @@ function bind() {
       return;
     }
     if (e.target.closest("#editor")) return;   // i formuläret öppnar namnen ingen panel
+    // infoikonen på gruppens rad: öppnas vid hovring, och med klick på en skärm utan mus. Raden ska inte öppnas.
+    const info = e.target.closest("[data-ginfo]");
+    document.querySelectorAll("[data-ginfo].is-open").forEach(el => { if (el !== info) setInfo(el, false); });
+    if (info) return setInfo(info, !info.classList.contains("is-open"));
     const t = e.target.closest("[data-member],[data-role],[data-fn],[data-group]");
     if (!t) return;
     if (t.dataset.member) memberDrawer(D.member[t.dataset.member]);
