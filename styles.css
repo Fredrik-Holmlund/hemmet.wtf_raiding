@@ -1000,10 +1000,10 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .gsec__h h2 small { font: 400 14px/1 var(--font-ui); letter-spacing: var(--cap); text-transform: uppercase; color: var(--text-primary); -webkit-text-stroke: .3px currentColor; }
 .gsec__h > span { font-size: 13px; color: var(--text-muted); }
 /* korten på längden: varje grupp är en egen yta med sina kolumner */
-.grow { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) 150px 170px 88px 96px 16px; gap: 14px; align-items: center; min-height: 72px; margin-top: 8px; padding: 12px 14px 12px 18px;
-  border: 1px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, .03); cursor: pointer; transition: background-color .12s, border-color .12s; }
-.grow::before { content: ""; position: absolute; left: 7px; top: 14px; bottom: 14px; width: 2px; border-radius: 2px; background: var(--q, transparent); opacity: .85; }
-.grow:hover { border-color: rgba(240, 210, 122, .45); background: rgba(240, 210, 122, .07); }
+.grow { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) 150px 170px 88px 96px 16px; gap: 14px; align-items: center; min-height: 72px; margin-top: 8px; padding: 12px 14px 12px 13px;
+  border: 1px solid var(--line); border-left: 3px solid var(--q, var(--line-strong)); border-radius: 8px; cursor: pointer; transition: border-color .12s;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--q, transparent) var(--glow, 14%), transparent), transparent 190px), rgba(255, 255, 255, .03); }   /* nivåfärgen är kortets vänsterkant och tonar in i ytan */
+.grow:hover { --glow: 26%; border-color: rgba(240, 210, 122, .45); border-left-color: var(--q, var(--line-strong)); }
 .grow:focus-visible { outline-offset: -2px; }
 .grow small { display: block; font-size: 13px; line-height: 1.4; color: var(--text-muted); }   /* inget klipps: längre texter finns bakom infoikonen */
 .grow__rm, .grow__time { min-width: 0; }
@@ -1035,9 +1035,10 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .grow--full .grow__name > b, .grow--full .grow__time, .grow--full .grow__rm, .grow--full .grow__main small { opacity: .6; }
 .grow .gcode { font-size: 15px; }
 .grow--full .gcode { opacity: .7; }
+.grow--full { --glow: 6%; border-left-color: color-mix(in srgb, var(--q, transparent) 45%, transparent); }
 @media (max-width: 860px) {
   .gbar { position: relative; top: auto; }   /* två rader verktyg får inte ta skärmen på en mobil */
-  .grow { grid-template-columns: 28px minmax(0, 1fr) auto auto; gap: 4px 10px; grid-template-areas: "code main main go" ". time roles signup"; padding: 10px 12px 10px 18px; }
+  .grow { grid-template-columns: 28px minmax(0, 1fr) auto auto; gap: 4px 10px; grid-template-areas: "code main main go" ". time roles signup"; padding: 10px 12px 10px 11px; }
   .grow__code { grid-area: code; } .grow__main { grid-area: main; } .grow__time { grid-area: time; } .grow__roles { grid-area: roles; } .grow__signup { grid-area: signup; } .grow__go { grid-area: go; }
   .grow__rm { display: none; }
   .ginfo { position: static; }
