@@ -19,11 +19,13 @@ const NUM = n => `<span class="n">${n}</span>`;
 const DAYS = [["mon", "mån"], ["tue", "tis"], ["wed", "ons"], ["thu", "tor"], ["fri", "fre"], ["sat", "lör"], ["sun", "sön"]];
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 // "Ons & sön · 19:30", "Mån, ons & fre · 20:00", eller fritexten om det inte finns dagar
-function scheduleText(g) {
+function scheduleTime(g) {
   const days = DAYS.filter(([k]) => g.raid_days?.includes(k)).map(([, v]) => v);
   const list = days.length > 1 ? `${days.slice(0, -1).join(", ")} & ${days.at(-1)}` : days[0] ?? "";
-  const parts = [cap(list), g.raid_start].filter(Boolean).join(" · ");
-  const note = g.schedule_note;
+  return [cap(list), g.raid_start].filter(Boolean).join(" · ");
+}
+function scheduleText(g) {
+  const parts = scheduleTime(g), note = g.schedule_note;
   return [parts, parts && note ? `(${note})` : note].filter(Boolean).join(" ");
 }
 const RECRUIT_WORDS = 50;
@@ -233,19 +235,22 @@ const recruitRow = g => {
 };
 
 // en rad per grupp: tabellen ska gå att läsa uppifrån och ned, och full grupp tonas ned så att de öppna syns först
+const infoIcon = (label, rows) => `<span class="ginfo" data-ginfo>
+  <button type="button" aria-label="${esc(label)}" aria-expanded="false">${icon("info")}</button>
+  <span class="ginfo__pop" role="tooltip">${rows.map(([title, text]) => `<b>${title}</b><span>${esc(text)}</span>`).join("")}</span>
+</span>`;
+
 function groupListRow(g) {
   const a = amb(g.ambition), rm = raidMaster(g);
   const about = [["Om gruppen", g.blurb], ["Rostern", g.recruit_note]].filter(([, text]) => text);
+  const time = scheduleTime(g);   // tillägget till tiden står bakom ikonen, så att kolumnen håller sig till en rad
   return `<article class="grow${hasRoom(g) ? "" : " grow--full"}" data-group="${g.id}" tabindex="0" role="link" aria-label="Öppna ${esc(g.name)}"${a ? ` style="--q:${a.color}"` : ""}>
     <span class="grow__code">${codeTag(g)}</span>
     <div class="grow__main">
-      <div class="grow__name"><b>${esc(g.name)}</b>${about.length ? `<span class="ginfo" data-ginfo>
-        <button type="button" aria-label="Om ${esc(g.name)}" aria-expanded="false">${icon("info")}</button>
-        <span class="ginfo__pop" role="tooltip">${about.map(([label, text]) => `<b>${label}</b><span>${esc(text)}</span>`).join("")}</span>
-      </span>` : ""}</div>
+      <div class="grow__name"><b>${esc(g.name)}</b>${about.length ? infoIcon(`Om ${g.name}`, about) : ""}</div>
       <small>${a ? `<span class="grow__amb">${esc(a.name)}</span>` : ""}${a && g.recruit_note ? " · " : ""}${esc(g.recruit_note ?? "")}</small></div>
     <div class="grow__rm">${rm ? who(rm) : "-"}</div>
-    <div class="grow__time">${esc(scheduleText(g) || "-")}</div>
+    <div class="grow__time">${esc(time || g.schedule_note || "-")}${time && g.schedule_note ? infoIcon("Om tiden", [["Om tiden", g.schedule_note]]) : ""}</div>
     <div class="grow__signup">${recruitRow(g)}</div>
   </article>`;
 }
