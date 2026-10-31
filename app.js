@@ -777,7 +777,7 @@ const PAGES = { "": "start", "#": "start", "#start": "start", "#organisation": "
 const PAGE_TITLES = { start: "Raiding", raidgrupper: "Raidgrupper", roller: "Roller & ansvar" };
 
 function showMain(page, title) {
-  document.body.classList.toggle("has-hero", page === "start");
+  document.body.classList.toggle("has-hero", page !== null);   // gruppens egna sidor har ingen bild
   document.querySelectorAll("main.page").forEach(el => { el.hidden = el.dataset.page !== page; });
   $("#groupPage").hidden = page !== null;
   const active = page ?? "raidgrupper";
@@ -962,13 +962,21 @@ function slideBar(nav) {
 
 let moveNavBar = null;
 function initHeader() {
-  document.querySelector('[data-nav="start"]').setAttribute("aria-current", "page");
+  // rätt menyval från början, så att linjen inte åker dit när sidan laddas
+  const h = location.hash;
+  const page = h.startsWith("#roller") ? "roller" : /^#(raidgrupper|grupp|ny-grupp)/.test(h) ? "raidgrupper" : "start";
+  document.querySelector(`[data-nav="${page}"]`).setAttribute("aria-current", "page");
   moveNavBar = slideBar($("#siteNav"));
   const bar = $(".topbar"), menuBtn = $(".topbar__menu");
   menuBtn.addEventListener("click", () => menuBtn.setAttribute("aria-expanded", String(bar.classList.toggle("is-open"))));
   bar.addEventListener("click", e => { if (e.target.closest(".site-nav a")) { bar.classList.remove("is-open"); menuBtn.setAttribute("aria-expanded", "false"); } });
   // genomskinlig över heron, som på hemmet.wtf
-  new IntersectionObserver(([e]) => bar.classList.toggle("at-top", e.isIntersecting), { threshold: .15 }).observe($("#hero"));
+  const heroes = new Map();
+  const seen = new IntersectionObserver(entries => {
+    entries.forEach(e => heroes.set(e.target, e.isIntersecting));
+    bar.classList.toggle("at-top", [...heroes.values()].some(Boolean));
+  }, { threshold: .15 });
+  document.querySelectorAll(".hero, .subhero").forEach(el => seen.observe(el));
   embers($("#embers"));
   addEventListener("resize", fitHero);
 }

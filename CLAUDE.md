@@ -51,6 +51,7 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
   nedräkningen: raidgrupper, öppna för signups och i hemmet (medlemmar på Discord, från den publika inbjudningslänken). Rullbandet visar veckans raids totalt och per veckodag
   (`raid_days` på aktiva grupper, en raid per grupp och dag; bara dagar med raids). Under det grupperna per nivå (A/B/C + koderna).
   **Förklaringarna hör inte hit:** "Ordning i hemmet" och *Hitta ditt rum* finns inte på live-sidan. `#raidgrupper/soker` öppnar listan filtrerad.
+- **Undersidorna** Raidgrupper och Roller & ansvar har en lägre banderoll med samma bild och genomskinlig meny (`.subhero`). Gruppens egna sidor har ingen bild.
 - **Raidgrupper** `#raidgrupper`: korten under rubrikerna 40-manna, 20-manna och 10-manna. Överst filter (2026-10-12): storlek,
   dagar (flera val = någon av dem), starttid (före 19, 19–21, 21 och senare), *Söker* tank/healer/DPS (grupper med plats som behöver rollen) och "Bara grupper som är öppna för signups", med
   "Visar N av M" och *Rensa filtren*. Ny grupp-korten döljs medan man filtrerar. Ledningen ser "+ Ny 40-mannagrupp" osv. sist under varje rubrik (`#ny-grupp/40`, storleken förvald), tomma
