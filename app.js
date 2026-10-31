@@ -991,10 +991,6 @@ function slideBar(nav) {
 
 let moveNavBar = null;
 function initHeader() {
-  // rätt menyval från början, så att linjen inte åker dit när sidan laddas
-  const h = location.hash;
-  const page = h.startsWith("#roller") ? "roller" : /^#(raidgrupper|grupp|ny-grupp)/.test(h) ? "raidgrupper" : "start";
-  document.querySelector(`[data-nav="${page}"]`).setAttribute("aria-current", "page");
   moveNavBar = slideBar($("#siteNav"));
   const bar = $(".topbar"), menuBtn = $(".topbar__menu");
   menuBtn.addEventListener("click", () => menuBtn.setAttribute("aria-expanded", String(bar.classList.toggle("is-open"))));
