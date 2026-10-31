@@ -1124,7 +1124,7 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 :root { --fs-hero: clamp(64px, 14vw, 200px); }
 .has-hero .topbar { margin-bottom: calc(-1 * var(--tb, 55px)); }
 .topbar { transition: background-color .3s, border-color .3s; }
-.topbar.at-top:not(.is-open) { background: transparent; border-bottom-color: transparent; backdrop-filter: none; }
+.topbar.at-top:not(.is-open) { background: transparent; border-bottom-color: transparent; }   /* suddningen är kvar även över bilden */
 .hero { min-height: min(88svh, 860px); display: grid; align-content: center; justify-items: center; padding: calc(env(safe-area-inset-top, 0px) + 96px) 16px 70px; }
 .hero__art { z-index: -2; background: url("assets/hero.webp") center 62% / cover; filter: saturate(1.05) brightness(.82); opacity: 1;
   -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 98%); mask-image: linear-gradient(180deg, #000 62%, transparent 98%); }
