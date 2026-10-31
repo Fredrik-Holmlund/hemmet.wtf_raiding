@@ -1101,3 +1101,12 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 
 /* pricken syns bara när någon är online: utan närvaro från boten vet vi inget om resten */
 .who:not(.is-online) .who__dot, .presence:not(.is-online) .who__dot { display: none; }
+
+/* undersidorna: samma bild som heron, men lägre. Innehållet ska börja direkt under. */
+.subhero { position: relative; isolation: isolate; overflow: hidden; display: grid; align-content: end; justify-items: center; min-height: min(44svh, 400px);
+  padding: calc(var(--tb, 56px) + 36px) 16px 44px; text-align: center; }
+.subhero .eyebrow { justify-content: center; text-shadow: 0 1px 4px rgba(0, 0, 0, .8); }
+.subhero .d2 { margin-bottom: 12px; text-shadow: 0 2px 10px rgba(0, 0, 0, .7); }
+.subhero .lede { margin: 0 auto; color: var(--text-primary); text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+.subhero + .page-head { padding-top: 12px; }
+.subhero + .page-head .gfilters { margin-top: 0; }
