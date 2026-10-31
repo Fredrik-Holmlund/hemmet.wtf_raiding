@@ -9,8 +9,9 @@ export { configured };
 // Utan inloggning får man bara läsa de här kolumnerna (se migrationen), så de måste namnges.
 const MEMBER_PUBLIC = "id, character, class, guild_roles, online, in_guild";
 const MEMBER_LOGGED_IN = `${MEMBER_PUBLIC}, discord, discord_id, last_seen`;
+// links skrivs bara av boten (create-group-thread)
 const GROUP_COLUMNS = ["name", "size", "raid_id", "ambition", "raid_days", "raid_start", "schedule_note", "blurb", "details",
-  "signup", "recruit_roles", "recruit_note", "status", "links"];
+  "signup", "recruit_roles", "recruit_note", "status"];
 
 let db = null;
 let onError = console.error;

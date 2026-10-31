@@ -234,8 +234,8 @@ så allt går via Supabase (edge functions med service role).
   `supabase/functions/post-assignments`.
 - Funktionen kontrollerar behörigheten med samma regel som RLS (`can_edit_board(group_id)`) och postar via boten.
 - **Kanalupplägg (ledningens text 2026-10-12):** forumkanaler för 10-, 20- och 40-mannaraids, där **varje grupp har en egen
-  tråd** med information, diskussioner och signups. Grupperna har inga egna kanaler. Boten postar i gruppens tråd; tråden
-  anges som länk i gruppens formulär (`links.thread`, "Gruppens tråd på Discord"), och tråd-id:t tas ur länken.
+  tråd** med information, diskussioner och signups. Grupperna har inga egna kanaler. Boten postar i gruppens tråd; länken
+  (`links.thread`) sätts bara av boten och går inte att redigera på sidan, och tråd-id:t tas ur länken.
 - **Valfri ping** av de som står på tavlan: Raid-Helper-exporten har allas Discord-id (`userId`). Spara det i compen vid import
   (görs inte i dag) så kan boten nämna exakt rätt personer.
 

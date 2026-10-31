@@ -1110,3 +1110,6 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .subhero .lede { margin: 0 auto; color: var(--text-primary); text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
 .subhero + .page-head { padding-top: 12px; }
 .subhero + .page-head .gfilters { margin-top: 0; }
+
+/* trådlänken i formuläret: boten sköter den, så den går bara att öppna */
+.ed__thread { justify-self: start; width: fit-content; }

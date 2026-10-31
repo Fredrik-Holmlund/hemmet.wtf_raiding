@@ -698,7 +698,10 @@ function renderEditor() {
       <div class="ed__col">
         <fieldset class="ed__box"><legend>Vem ansvarar för vad</legend><div id="staffBox">${staffEditor()}</div></fieldset>
         <fieldset class="ed__box"><legend>Discord</legend>
-          ${field("link_thread", "Gruppens tråd på Discord", g.links?.thread, 'type="url" placeholder="https://discord.com/channels/…"')}
+          <div class="field"><span>Gruppens tråd på Discord</span>
+            ${g.links?.thread ? `<a class="btn btn--ghost btn--sm ed__thread" href="${esc(g.links.thread)}" target="_blank" rel="noopener">Öppna tråden</a>` : ""}
+            <small>${g.links?.thread ? "Boten uppdaterar tråden när gruppen sparas." : isNew ? "Boten skapar tråden när gruppen skapas." : "Gruppen har ingen tråd än. Skapa den från gruppens sida."}</small>
+          </div>
         </fieldset>
       </div>
     </div>
@@ -725,12 +728,6 @@ async function saveDraft(form) {
   if (!draft.slots.raid_master.length) errors.push("Gruppen behöver en Raid Master.");
   if (words(val("recruit_note")) > RECRUIT_WORDS) errors.push(`Texten om rostern får vara högst ${RECRUIT_WORDS} ord (nu ${words(val("recruit_note"))}).`);
   if (val("raid_start") && !/^([01]\d|2[0-3]):[0-5]\d$/.test(val("raid_start"))) errors.push("Starttiden ska skrivas som TT:MM, t.ex. 19:30.");
-  const links = {};
-  for (const k of Object.keys(LINK_NAMES)) {
-    const v = val(`link_${k}`);
-    if (v && !/^https:\/\/\S+$/i.test(v)) errors.push(`Länken till ${LINK_NAMES[k]} ska börja med https://`);
-    links[k] = v || null;
-  }
   if (errors.length) {
     const box = $("#edError");
     box.innerHTML = errors.map(e => `<p>${esc(e)}</p>`).join("");
@@ -747,7 +744,7 @@ async function saveDraft(form) {
         : nextCode(val("ambition"), size, g.id), raid_days: fd.getAll("raid_days"), raid_start: val("raid_start") || null, schedule_note: val("schedule_note") || null,
       blurb: val("blurb") || null, details: val("details") || null,
       signup: val("signup") || "open", recruit_note: val("recruit_note") || null,
-      recruit_roles: val("signup") !== "full" ? fd.getAll("recruit_roles") : [], links });
+      recruit_roles: val("signup") !== "full" ? fd.getAll("recruit_roles") : [] });
     if (can.editStructure(me)) await setSlot(saved.id, "raid_master", draft.slots.raid_master);
     // funktionerna bemannas bara i 20- och 40-manna; blir gruppen 10-manna töms de (storleken ändras bara av ledningen)
     for (const f of D.functions) await setSlot(saved.id, f.id, size >= 20 ? draft.slots[f.id] : []);
