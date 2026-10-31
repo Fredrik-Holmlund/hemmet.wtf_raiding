@@ -39,6 +39,18 @@ export async function syncRoles() {
   catch (err) { console.warn(err); }
 }
 
+// Boten skapar gruppens tråd i rätt forum. Funktionen kontrollerar behörigheten och sparar länken på gruppen.
+export async function createThread(groupId, content) {
+  const { data, error } = await sb.functions.invoke("create-group-thread", { body: { group_id: groupId, content } });
+  if (error) {
+    const body = await error.context?.json?.().catch(() => null);
+    throw new Error(body?.error ?? error.message);
+  }
+  const g = db.groups.find(x => x.id === groupId);
+  g.links = { ...g.links, thread: data.url };
+  return data.url;
+}
+
 /* ---------- läsa ---------- */
 export async function loadData(session) {
   const [roles, functions, ambitions, members, groups, assignments, boards, templates, raids] = await Promise.all([

@@ -84,6 +84,11 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
   till sidan (inte signupläget: det ändras för ofta för att stå i ett inlägg). Går att ändra i rutan innan *Kopiera*. Namn skrivs `@Namn`
   tills `discord_id` finns; då blir de riktiga omnämnanden `<@id>` (`mention()` i app.js; `discord_id` syns bara för inloggade). Senare kan boten uppdatera
   trådens första inlägg direkt.
+- **Tråd på Discord:** när en grupp skapas lägger boten upp en tråd i rätt forum (`10-man-raids`, `20-man-raids`, `40-man-raids`) med titeln
+  `Namn - 40-manna - Chill Raiding` och samma text som *Text till Discord* (edge function `create-group-thread`, högst 2000 tecken, Detaljer kortas vid behov).
+  Omnämnanden visas men pingar ingen. Länken sparas i `links.thread`. Saknas tråd har gruppens sida knappen *Skapa tråd på Discord*.
+  Inlägget uppdateras inte när gruppen ändras.
+- **Kontot i menyn** visar profilbilden från Discord (`user_metadata.avatar_url`, uppdateras vid inloggning) och namnet i klassfärg.
 - **Assignments** `#grupp/<id>/assignments`: tavlan, se nedan.
 - **Redigera** `#grupp/<id>/redigera` och **skapa** `#ny-grupp`. Saknas behörighet visas "Låst dörr".
 - **Sidopanel** för person, roll och funktion. En person visar allt hen ansvarar för, per grupp.

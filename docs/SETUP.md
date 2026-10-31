@@ -67,6 +67,18 @@ rollnamnen på servern ändras ingenting.
 
 Kontrollera med `select character, discord, guild_roles from members;` att rätt personer fick rollen.
 
+## 5b. Trådar på Discord
+
+När en grupp skapas lägger boten upp en tråd i forumet `10-man-raids`, `20-man-raids` eller `40-man-raids`, med gruppens text som
+första inlägg. Forumen hittas på namnet, så de måste heta exakt så.
+
+1. Lägg upp funktionen som i steget ovan: `create-group-thread`, med **Verify JWT** avstängt. Den använder samma hemligheter.
+2. Boten behöver **View Channels**, **Send Messages** och **Embed Links** i de tre forumen. Är forumen privata, lägg till boten eller
+   dess roll i forumens behörigheter.
+3. Kräver forumen en tagg för nya inlägg måste det stängas av, annars nekar Discord tråden.
+
+Finns ingen tråd på en grupp har gruppens sida knappen *Skapa tråd på Discord*.
+
 ## 6. Publicera på raiding.hemmet.wtf
 
 1. I repots Settings → Pages: publicera från `main`, mappen `/`.

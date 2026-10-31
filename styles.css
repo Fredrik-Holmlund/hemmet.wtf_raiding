@@ -1050,14 +1050,14 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 
 /* heron: samma uppbyggnad som på hemmet.wtf, med raidingsidans egen bild. Topbaren är genomskinlig över den. */
 :root { --fs-hero: clamp(64px, 14vw, 200px); }
-.has-hero .topbar { margin-bottom: -55px; }
+.has-hero .topbar { margin-bottom: calc(-1 * var(--tb, 55px)); }
 .topbar { transition: background-color .3s, border-color .3s; }
 .topbar.at-top:not(.is-open) { background: transparent; border-bottom-color: transparent; backdrop-filter: none; }
 .hero { min-height: min(88svh, 860px); display: grid; align-content: center; justify-items: center; padding: calc(env(safe-area-inset-top, 0px) + 96px) 16px 70px; }
 .hero__art { z-index: -2; background: url("assets/hero.webp") center 62% / cover; filter: saturate(1.05) brightness(.82); opacity: 1;
   -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 98%); mask-image: linear-gradient(180deg, #000 62%, transparent 98%); }
 .hero__glow { position: absolute; inset: 0; z-index: -1; background: radial-gradient(ellipse 60% 52% at 50% 46%, rgba(8, 6, 14, .62), rgba(8, 6, 14, .2) 75%, transparent),
-  linear-gradient(180deg, rgba(4, 7, 15, .5), transparent 26%); }
+  linear-gradient(180deg, rgba(4, 7, 15, .3), transparent 26%); }
 .hero canvas { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; }
 .hero__sigil { width: auto; height: 76px; margin-bottom: 18px; filter: drop-shadow(0 0 18px rgba(0, 0, 0, .6)); }
 .hero__meta { margin: 0 0 14px; font: 600 14px/1.3 var(--font-label); letter-spacing: var(--cap); text-transform: uppercase; color: var(--text-primary); text-shadow: 0 1px 3px rgba(0, 0, 0, .9), 0 0 14px rgba(0, 0, 0, .7); }
@@ -1088,3 +1088,13 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
   .hero__count { gap: 14px; }
   .hero__count span { font-size: 10px; letter-spacing: .06em; }
 }
+
+/* kontot i menyn: profilbilden från Discord, namnet i klassfärg */
+.acct { display: flex; align-items: center; justify-items: start; gap: 9px; padding: 2px 4px 2px 2px; border: 0; border-radius: 999px; background: none; cursor: pointer; }
+.acct:hover .acct__img { box-shadow: 0 0 0 2px var(--gold-300); }
+.acct__img { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--c);
+  background: var(--obsidian-900); color: var(--c); font: 700 15px/1 var(--font-body); transition: box-shadow .15s; }
+.acct__text { display: grid; gap: 2px; text-align: left; }
+.topbar.at-top:not(.is-open) .acct b, .topbar.at-top:not(.is-open) .acct small { text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+.topbar.at-top:not(.is-open) .acct small { color: var(--text-primary); }
+@media (max-width: 480px) { .acct__text { display: none; } }

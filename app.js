@@ -1,4 +1,4 @@
-import { configured, getSession, currentMemberId, syncRoles, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
+import { configured, getSession, currentMemberId, syncRoles, createThread, signIn, signOut, loadData, saveGroup, setSlot, removeGroup, restoreGroup, deleteGroup, saveProfile, setErrorHandler } from "./data.js";
 import { can, isLeadership } from "./perms.js";
 import { renderAssignments, drawBoard, bindAssignments } from "./assignments.js";
 import { embers } from "./embers.js";
@@ -340,6 +340,7 @@ function renderRoles() {
    Discords egen markdown: # rubrik, **fet**, > citat, -# liten text. Nivån som färgad cirkel i kvalitetsfärgen.
    Personer blir riktiga omnämnanden (<@id>) när discord_id finns (Supabase), annars @namn som går att justera i rutan. */
 const QUALITY_DOT = { A: "🟠", B: "🟣", C: "🔵" };
+const SITE_URL = "https://raiding.hemmet.wtf", DISCORD_LIMIT = 2000;
 const mention = m => m.discord_id ? `<@${m.discord_id}>` : `@${m.character}`;
 function discordPost(g) {
   const a = amb(g.ambition), rm = raidMaster(g);
@@ -349,17 +350,19 @@ function discordPost(g) {
     staff.push(["Raid Leader", holders(g.id, "leadership")]);
     D.functions.filter(f => f.id !== "leadership").forEach(f => staff.push([f.name, holders(g.id, f.id)]));
   }
-  const url = `${location.origin}${location.pathname}#grupp/${g.id}`;
-  return [
+  const build = details => [
     `# ${g.name}${g.raid_id ? `  \`${g.raid_id}\`` : ""}`,
     [`**${g.size}-manna**`, a && `${QUALITY_DOT[a.level] ?? ""} **${a.name}**`, scheduleText(g)].filter(Boolean).join("  ·  "),
     "",
     "## Vem ansvarar för vad",
     ...staff.map(([name, list]) => `> **${name}** - ${who(list)}`),
-    ...(g.details || g.blurb ? ["", "## Detaljer", (g.details || g.blurb).trim()] : []),
+    ...(details ? ["", "## Detaljer", details] : []),
     "",
-    `-# Allt om gruppen: <${url}>`,
+    `-# Allt om gruppen: <${SITE_URL}/#grupp/${g.id}>`,
   ].filter((line, i, arr) => !(line === "" && arr[i - 1] === "")).join("\n");
+  // ett Discord-inlägg får vara högst 2000 tecken: Detaljer får ge sig, det fulla står på sidan
+  const details = (g.details || g.blurb || "").trim(), text = build(details);
+  return text.length <= DISCORD_LIMIT ? text : build(`${details.slice(0, details.length - (text.length - DISCORD_LIMIT) - 2).trimEnd()} …`);
 }
 function discordPostDrawer(g) {
   const text = discordPost(g);
@@ -369,8 +372,7 @@ function discordPostDrawer(g) {
     <div class="dpost__bar">
       <button class="btn btn--primary" data-discord-copy>Kopiera</button>
       <span class="dpost__status" id="discordStatus" role="status"></span>
-    </div>
-    <p class="note">Namnen blir riktiga @-omnämnanden när sidan är kopplad till Discord. Tills dess: skriv om @namnet i Discord om det inte blir blått.</p>`);
+    </div>`);
 }
 
 /* ---------- raidgruppens egen sida ---------- */
@@ -398,7 +400,7 @@ function renderGroupPage(g) {
     <div class="gp__bar">
       ${crumbs([["Raidgrupper", "#raidgrupper"], [g.name]])}
       ${removed ? `<span class="facts">${removeButtons(g)}</span>`
-        : can.editGroup(me, g, D.assignments) ? `<span class="gp__actions"><button class="btn btn--ghost" data-discord-post="${g.id}">Text till Discord</button>
+        : can.editGroup(me, g, D.assignments) ? `<span class="gp__actions">${g.links?.thread ? "" : `<button class="btn btn--ghost" data-discord-thread="${g.id}">Skapa tråd på Discord</button>`}<button class="btn btn--ghost" data-discord-post="${g.id}">Text till Discord</button>
           <a class="btn btn--primary" href="#grupp/${g.id}/redigera">Redigera gruppen</a></span>` : ""}
     </div>
     <p class="eyebrow">${removed ? "Borttagen raidgrupp" : "Raidgrupp"}</p>
@@ -497,13 +499,16 @@ const saveError = err => /row-level security|permission denied|0 rows|multiple \
   : /Failed to fetch|NetworkError/i.test(err.message) ? "Vi kommer inte åt databasen just nu. Försök igen."
   : `Det gick inte att spara: ${err.message}`;
 let toastTimer = null;
-function showError(err) {
-  console.error(err);
+function toast(text) {
   const t = $("#toast");
-  t.textContent = saveError(err);
+  t.textContent = text;
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, 7000);
+}
+function showError(err) {
+  console.error(err);
+  toast(saveError(err));
 }
 
 function openDrawer(html) {
@@ -582,10 +587,18 @@ function titleOf(m) {
 }
 
 function renderAccount() {
+  const avatar = session?.user?.user_metadata?.avatar_url;   // profilbilden från Discord, sparad vid inloggningen
+  const name = me?.character ?? "Min profil";
   $("#account").innerHTML = me
-    ? `<button class="acct" data-account style="--c:${CLASS_COLORS[me.class] ?? "#fff"}"><b>${esc(me.character ?? "Min profil")}</b><small>${esc(titleOf(me))}</small></button>`
+    ? `<button class="acct" data-account style="--c:${CLASS_COLORS[me.class] ?? "#fff"}">${avatar
+        ? `<img class="acct__img" src="${esc(avatar)}" alt="" referrerpolicy="no-referrer">` : `<span class="acct__img" aria-hidden="true">${esc(name[0])}</span>`}
+        <span class="acct__text"><b>${esc(name)}</b><small>${esc(titleOf(me))}</small></span></button>`
     : `<span class="account__out"><button class="btn btn--ghost btn--sm" data-account>Logga in</button><a class="btn btn--primary btn--sm" href="https://hemmet.wtf/#join">Flytta in</a></span>`;
+  fitHero();
 }
+
+// heron ska börja exakt under menyn, som är olika hög utloggad och inloggad
+const fitHero = () => document.documentElement.style.setProperty("--tb", `${$(".topbar").offsetHeight}px`);
 
 function accountDrawer() {
   if (!me) {
@@ -739,6 +752,10 @@ async function saveDraft(form) {
     for (const f of D.functions) await setSlot(saved.id, f.id, size >= 20 ? draft.slots[f.id] : []);
     draft = null;
     refresh();
+    if (isNew) {
+      try { await createThread(saved.id, discordPost(D.group[saved.id])); refresh(); }
+      catch (err) { console.error(err); toast(`Gruppen är sparad, men tråden på Discord kunde inte skapas: ${err.message}`); }
+    }
     location.hash = `grupp/${saved.id}`;
   } catch (err) {
     console.error(err);
@@ -827,6 +844,13 @@ function bindFilters() {
 function bind() {
   bindFilters();
   document.addEventListener("click", async e => {
+    const thread = e.target.closest("[data-discord-thread]");
+    if (thread) {
+      thread.disabled = true;
+      try { await createThread(thread.dataset.discordThread, discordPost(D.group[thread.dataset.discordThread])); refresh(); route(); }
+      catch (err) { thread.disabled = false; console.error(err); toast(`Tråden kunde inte skapas: ${err.message}`); }
+      return;
+    }
     const open = e.target.closest("[data-discord-post]");
     if (open) return discordPostDrawer(D.groups.find(g => g.id === open.dataset.discordPost));
     if (!e.target.closest("[data-discord-copy]")) return;
@@ -944,6 +968,7 @@ function initHeader() {
   // genomskinlig över heron, som på hemmet.wtf
   new IntersectionObserver(([e]) => bar.classList.toggle("at-top", e.isIntersecting), { threshold: .15 }).observe($("#hero"));
   embers($("#embers"));
+  addEventListener("resize", fitHero);
 }
 
 // sidan kan inte visa något utan databasen: heron står kvar med en förklaring
