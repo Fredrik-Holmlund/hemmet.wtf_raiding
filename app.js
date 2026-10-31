@@ -19,10 +19,21 @@ const NUM = n => `<span class="n">${n}</span>`;
 const DAYS = [["mon", "mån"], ["tue", "tis"], ["wed", "ons"], ["thu", "tor"], ["fri", "fre"], ["sat", "lör"], ["sun", "sön"]];
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 // "Ons & sön · 19:30", "Mån, ons & fre · 20:00", eller fritexten om det inte finns dagar
-function scheduleTime(g) {
+function dayList(g) {
   const days = DAYS.filter(([k]) => g.raid_days?.includes(k)).map(([, v]) => v);
-  const list = days.length > 1 ? `${days.slice(0, -1).join(", ")} & ${days.at(-1)}` : days[0] ?? "";
-  return [cap(list), g.raid_start].filter(Boolean).join(" · ");
+  return cap(days.length > 1 ? `${days.slice(0, -1).join(", ")} & ${days.at(-1)}` : days[0] ?? "");
+}
+const scheduleTime = g => [dayList(g), g.raid_start].filter(Boolean).join(" · ");
+// nästa raid räknat från nu: "Mån 18:00". Har dagens raid redan börjat gäller nästa.
+function nextRaid(g) {
+  if (!g.raid_days?.length) return g.raid_start ?? "";
+  const now = new Date(), today = (now.getDay() + 6) % 7, clock = now.toTimeString().slice(0, 5);
+  const wait = d => {
+    const n = (DAYS.findIndex(([k]) => k === d) - today + 7) % 7;
+    return n === 0 && g.raid_start && g.raid_start <= clock ? 7 : n;
+  };
+  const day = [...g.raid_days].sort((a, b) => wait(a) - wait(b))[0];
+  return [cap(DAYS.find(([k]) => k === day)[1]), g.raid_start].filter(Boolean).join(" ");
 }
 function scheduleText(g) {
   const parts = scheduleTime(g), note = g.schedule_note;
@@ -243,15 +254,18 @@ const infoIcon = (label, rows) => `<span class="ginfo" data-ginfo>
 function groupListRow(g) {
   const a = amb(g.ambition), rm = raidMaster(g);
   const about = [["Om gruppen", g.blurb], ["Rostern", g.recruit_note]].filter(([, text]) => text);
-  const time = scheduleTime(g);   // tillägget till tiden står bakom ikonen, så att kolumnen håller sig till en rad
+  const signup = SIGNUP[g.signup] ?? SIGNUP.full, time = nextRaid(g);
+  const timeNote = [g.raid_days?.length > 1 ? dayList(g) : "", g.schedule_note].filter(Boolean).join(" · ");
   return `<article class="grow${hasRoom(g) ? "" : " grow--full"}" data-group="${g.id}" tabindex="0" role="link" aria-label="Öppna ${esc(g.name)}"${a ? ` style="--q:${a.color}"` : ""}>
     <span class="grow__code">${codeTag(g)}</span>
     <div class="grow__main">
       <div class="grow__name"><b>${esc(g.name)}</b>${about.length ? infoIcon(`Om ${g.name}`, about) : ""}</div>
       <small>${a ? `<span class="grow__amb">${esc(a.name)}</span>` : ""}${a && g.recruit_note ? " · " : ""}${esc(g.recruit_note ?? "")}</small></div>
-    <div class="grow__rm">${rm ? who(rm) : "-"}</div>
-    <div class="grow__time">${esc(time || g.schedule_note || "-")}${time && g.schedule_note ? infoIcon("Om tiden", [["Om tiden", g.schedule_note]]) : ""}</div>
-    <div class="grow__signup">${recruitRow(g)}</div>
+    <div class="grow__rm">${rm ? who(rm) : "-"}<small>Raid Master</small></div>
+    <div class="grow__time"><b>${esc(time || "-")}</b>${timeNote ? `<small title="${esc(timeNote)}">${esc(timeNote)}</small>` : ""}</div>
+    <div class="grow__roles">${hasRoom(g) ? roleIcons(g.recruit_roles) : ""}</div>
+    <div class="grow__signup"><span class="signup signup--${g.signup}" title="${esc(signup.hint)}"><span>${signup.name}</span></span></div>
+    <span class="grow__go">${icon("chevron-right")}</span>
   </article>`;
 }
 
@@ -284,7 +298,7 @@ function renderGroups() {
       (a.raid_id ?? "~").localeCompare(b.raid_id ?? "~", "sv", { numeric: true }) || a.name.localeCompare(b.name, "sv"));
     if (!gs.length) return "";
     return `<section class="gsec" aria-label="${n}-manna">
-      <div class="gsec__h"><h2>${NUM(n)}<small>man</small></h2><span>Raid Master</span><span>Tid</span><span>Signups</span></div>
+      <div class="gsec__h"><h2>${NUM(n)}<small>man</small></h2><span>${NUM(gs.length)} ${gs.length === 1 ? "grupp" : "grupper"}</span></div>
       ${gs.map(groupListRow).join("")}
     </section>`;
   }).join("");
