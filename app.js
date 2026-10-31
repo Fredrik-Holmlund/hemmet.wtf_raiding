@@ -10,6 +10,7 @@ const CLASS_COLORS = {
 };
 // raden "Raid Master" i bemanningstabellen är ingen funktion men står först
 const RM_SLOT = { id: "raid_master", name: "Raid Master", purpose: "Helhetsansvar för gruppen." };
+const isThread = url => /^https:\/\/discord\.com\/channels\/\d+\/\d+(\/\d+)?$/.test(url ?? "");
 const LINK_NAMES = { thread: "Gruppens tråd på Discord" };   // övriga länkar togs bort 2026-10-12
 
 const $ = s => document.querySelector(s);
@@ -414,7 +415,7 @@ function renderGroupPage(g) {
   }).join("");
   const contact = (isOrganized(g) ? holders(g.id, "feedback")[0] : null) ?? rm;
   const fact = (k, v) => v ? `<div><dt>${k}</dt><dd>${v}</dd></div>` : "";
-  const links = Object.entries(g.links ?? {}).filter(([k, url]) => url && LINK_NAMES[k]);
+  const links = Object.entries(g.links ?? {}).filter(([k, url]) => isThread(url) && LINK_NAMES[k]);
 
   const removed = g.status === "archived";
 
@@ -720,7 +721,7 @@ function renderEditor() {
         <fieldset class="ed__box"><legend>Vem ansvarar för vad</legend><div id="staffBox">${staffEditor()}</div></fieldset>
         <fieldset class="ed__box"><legend>Discord</legend>
           <div class="field"><span>Gruppens tråd på Discord</span>
-            ${g.links?.thread ? `<a class="btn btn--ghost btn--sm ed__thread" href="${esc(g.links.thread)}" target="_blank" rel="noopener">Öppna tråden</a>` : ""}
+            ${isThread(g.links?.thread) ? `<a class="btn btn--ghost btn--sm ed__thread" href="${esc(g.links.thread)}" target="_blank" rel="noopener">Öppna tråden</a>` : ""}
             <small>${g.links?.thread ? "Boten uppdaterar tråden när gruppen sparas." : isNew ? "Boten skapar tråden när gruppen skapas." : "Gruppen har ingen tråd än. Skapa den från gruppens sida."}</small>
           </div>
         </fieldset>

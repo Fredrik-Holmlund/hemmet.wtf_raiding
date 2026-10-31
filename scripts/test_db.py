@@ -88,6 +88,8 @@ def tests(d):
     bot = d.user("7", "Riktig")
     check("rad från boten kopplas till kontot", d.run("select count(*) from members m join auth.users u on u.id = m.user_id where u.id = %s and m.character = 'Bottad'", (str(bot),)) == [(1,)])
     d.run("update members set guild_roles = '{guild_master}' where discord_id = '1'")
+    d.run("update members set in_guild = true")
+    stranger = d.user("8", "Främling")   # inloggad, men inte med på servern
     ids = dict(d.run("select discord_id, id from members"))
     d.run("update members set character = 'Ledaren', class = 'priest' where discord_id = '1'")
     d.run("update members set character = 'Mästaren', class = 'mage' where discord_id = '2'")
@@ -118,6 +120,11 @@ def tests(d):
     check("felaktigt namn stoppas", d.denied("update members set character = 'x1' where id = current_member()"))
     check("upptaget namn stoppas", d.denied("update members set character = 'ledaren' where id = current_member()"))
 
+    check("okänd klass stoppas", d.denied("update members set class = '<b>' where id = current_member()"))
+    d.login(stranger)
+    check("utanför servern går namnet inte att fylla i", d.denied("update members set character = 'Främling' where id = current_member()"))
+    check("inte klassen heller", d.denied("update members set class = 'mage' where id = current_member()"))
+
     print("grupper")
     check("medlem kan inte skapa grupp", d.denied("insert into groups (id, name, size) values ('x', 'X', 10)"))
     d.login(lead)
@@ -136,12 +143,29 @@ def tests(d):
     d.login(other)
     check("medlem kan inte bemanna", d.denied("insert into assignments values ('g1', 'loot', current_member())"))
 
+    d.login(rm)
+    check("Raid Master skriver inte länken själv", d.denied("""update groups set links = '{"thread": "https://discord.com/channels/1/2"}' where id = 'g1'"""))
+    d.login(lead)
+    check("inte ledningen heller", d.denied("""update groups set links = '{"thread": "https://discord.com/channels/1/2"}' where id = 'g1'"""))
+    check("kan inte välja vem som ändrade", d.denied("update groups set updated_by = null where id = 'g1'"))
+    check("gruppens id har ett fast format", d.denied("""insert into groups (id, name, size) values ('a"b', 'X', 10)"""))
+    d.admin()
+    d.run("set role service_role")
+    check("boten skriver länken", d.run("""update groups set links = '{"thread": "https://discord.com/channels/1/2"}' where id = 'g1'""") == 1)
+    check("bara länkar till Discord", d.denied("""update groups set links = '{"thread": "javascript:alert(1)"}' where id = 'g1'"""))
+    check("Raid Master sparar gruppen utan att länken försvinner", (d.login(rm), d.run("update groups set details = 'igen' where id = 'g1'"), d.run("select links ->> 'thread' from groups where id = 'g1'"))[2] == [("https://discord.com/channels/1/2",)])
+
     print("tavlan och mallar")
     board = json.dumps({"roster": [{"name": "Mästaren"}, {"name": "Name"}], "raids": [{"name": "MC", "cells": {"Mästaren": {"c1": "Mästaren tar MT, Mästarensson inte"}}}]})
     d.login(helper)
     check("den med Assignments & taktik redigerar tavlan", d.run("insert into assignment_boards (group_id, data) values ('g1', %s)", (board,)) == 1)
     check("men inte en annan grupps", d.denied("insert into assignment_boards (group_id, data) values ('g2', %s)", (board,)))
     check("sparar mall", d.run("insert into assignment_templates (name, data) values ('M', '{}')") == 1)
+    bad = [{"roster": [{"name": "X", "color": '"><b>'}]}, {"roster": [{"name": "X", "color": 1}]}, {"raids": [{"id": '"><b>'}]}, {"raids": [{"id": 1}]}]
+    check("ogiltig färg eller id på tavlan stoppas", all(d.denied("update assignment_boards set data = %s where group_id = 'g1'", (json.dumps(x),)) for x in bad))
+    check("ogiltigt id i en mall stoppas", d.denied("insert into assignment_templates (name, data) values ('M2', %s)", (json.dumps(bad[2]),)))
+    check("giltig tavla går igenom", d.run("""update assignment_boards set data = data || '{"note": null}' where group_id = 'g1'""") == 1)
+    check("färg från importen går igenom", d.run("""update assignment_boards set data = jsonb_set(data, '{roster,1,color}', '"#a1b2c3"') where group_id = 'g1'""") == 1)
     d.login(other)
     check("medlem kan inte ändra tavlan", d.denied("update assignment_boards set data = '{}'"))
     check("medlem kan inte spara mall", d.denied("insert into assignment_templates (name, data) values ('M', '{}')"))
@@ -161,6 +185,28 @@ def tests(d):
     data = d.run("select data from assignment_boards where group_id = 'g1'")[0][0]
     check("och tillbaka till ett namn", data["roster"][0]["name"] == "Kungen")
     check("nycklar lämnas ifred", "Mästaren" in data["raids"][0]["cells"] and "name" in data["roster"][1])
+    d.admin()
+    words = {"roster": [{"name": "Spelaren"}], "raids": [{"id": "r", "name": "Tank", "sections": [{"id": "s", "name": "Tank", "rows": [{"id": "x", "role": "Tank", "player": "Spelaren"}]}],
+                                                       "columns": [{"id": "c", "name": "Tank"}], "cells": {"x": {"c": "Tank vänster, Spelaren höger"}}}]}
+    d.run("update assignment_boards set data = %s where group_id = 'g1'", (json.dumps(words),))
+    d.login(other)
+    d.run("update members set character = 'Tank' where id = current_member()")
+    d.run("update members set character = 'Hackad' where id = current_member()")
+    d.admin()
+    check("ett namnbyte rör inte tavlor där personen inte spelar", d.run("select data from assignment_boards where group_id = 'g1'")[0][0] == words)
+    d.run("update members set user_id = user_id, character = 'Spelaren' where id = %s", (ids["4"],))
+    d.login(other)
+    d.run("update members set character = 'Bytt' where id = current_member()")
+    d.admin()
+    data = d.run("select data from assignment_boards where group_id = 'g1'")[0][0]
+    raid = data["raids"][0]
+    check("bara spelarnamnet byts", data["roster"][0]["name"] == "Bytt" and raid["sections"][0]["rows"][0]["player"] == "Bytt"
+          and raid["cells"]["x"]["c"] == "Tank vänster, Bytt höger" and raid["name"] == "Tank" and raid["sections"][0]["rows"][0]["role"] == "Tank" and raid["columns"][0]["name"] == "Tank")
+    d.login()
+    check("hjälpfunktionerna går inte att anropa utifrån", d.denied("""select replace_in_json('"a"'::jsonb, 'a', 'b')""")
+          and d.denied("""select rename_player('{}'::jsonb, 'a', 'b', 'a')"""))
+    d.login(other)
+    check("inte för inloggade heller", d.denied("""select replace_in_json('"a"'::jsonb, 'a', 'b')"""))
 
     print("service role")
     d.admin()
