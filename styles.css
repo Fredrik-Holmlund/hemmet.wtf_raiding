@@ -1005,7 +1005,7 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .grow::before { content: ""; position: absolute; left: 7px; top: 14px; bottom: 14px; width: 2px; border-radius: 2px; background: var(--q, transparent); opacity: .85; }
 .grow:hover { border-color: rgba(240, 210, 122, .45); background: rgba(240, 210, 122, .07); }
 .grow:focus-visible { outline-offset: -2px; }
-.grow small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.5; color: var(--text-muted); }
+.grow small { display: block; font-size: 13px; line-height: 1.4; color: var(--text-muted); }   /* inget klipps: längre texter finns bakom infoikonen */
 .grow__rm, .grow__time { min-width: 0; }
 .grow__time b { display: block; font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--text-primary); }
 .grow__roles { display: flex; gap: 4px; }
@@ -1019,8 +1019,7 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .grow__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .grow__name > b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 18px/1.3 var(--font-ui); color: var(--text-primary); -webkit-text-stroke: .25px currentColor; }
 .grow:hover .grow__name > b { color: var(--gold-300); }
-.grow__main small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.5; color: var(--text-muted); }
-.grow__amb { color: var(--q); }
+.grow small.grow__amb { color: var(--q); }
 .ginfo { position: relative; display: inline-flex; flex: none; }
 .ginfo button { display: grid; place-items: center; padding: 3px; border: 0; border-radius: 50%; background: none; color: var(--text-faint); font-size: 15px; cursor: help; }
 .ginfo button::after { content: ""; position: absolute; inset: -8px; }   /* större yta att träffa med fingret */

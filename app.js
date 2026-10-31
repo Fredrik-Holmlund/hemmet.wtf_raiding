@@ -260,9 +260,9 @@ function groupListRow(g) {
     <span class="grow__code">${codeTag(g)}</span>
     <div class="grow__main">
       <div class="grow__name"><b>${esc(g.name)}</b>${about.length ? infoIcon(`Om ${g.name}`, about) : ""}</div>
-      <small>${a ? `<span class="grow__amb">${esc(a.name)}</span>` : ""}${a && g.recruit_note ? " · " : ""}${esc(g.recruit_note ?? "")}</small></div>
+      ${a ? `<small class="grow__amb">${esc(a.name)}</small>` : ""}</div>
     <div class="grow__rm">${rm ? who(rm) : "-"}<small>Raid Master</small></div>
-    <div class="grow__time"><b>${esc(time || "-")}</b>${timeNote ? `<small title="${esc(timeNote)}">${esc(timeNote)}</small>` : ""}</div>
+    <div class="grow__time"><b>${esc(time || "-")}</b>${timeNote ? `<small>${esc(timeNote)}</small>` : ""}</div>
     <div class="grow__roles">${Object.entries(ROLE_NAMES).map(([r, n]) => hasRoom(g) && g.recruit_roles?.includes(r) ? roleIcons([r])
       : `<i class="role role--${r} role--off" title="Söker inte ${n}" aria-hidden="true"></i>`).join("")}</div>
     <div class="grow__signup"><span class="signup signup--${g.signup}" title="${esc(signup.hint)}"><span>${signup.name}</span></span></div>
