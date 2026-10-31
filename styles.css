@@ -1021,7 +1021,7 @@ thead .bd__role, thead .bd__player { color: #b9ab94 !important; }
 .grow:hover .grow__name > b { color: var(--gold-300); }
 .grow small.grow__amb { color: var(--q); }
 .ginfo { position: relative; display: inline-flex; flex: none; }
-.ginfo button { display: grid; place-items: center; padding: 3px; border: 0; border-radius: 50%; background: none; color: var(--text-faint); font-size: 15px; cursor: help; }
+.ginfo button { display: grid; place-items: center; padding: 3px; border: 0; border-radius: 50%; background: none; color: var(--gold-400); font-size: 17px; cursor: help; }
 .ginfo button::after { content: ""; position: absolute; inset: -8px; }   /* större yta att träffa med fingret */
 .ginfo:hover button, .ginfo.is-open button { color: var(--gold-300); }
 .ginfo__pop { display: none; position: absolute; top: calc(100% + 8px); left: -10px; z-index: 4; width: 320px; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: 7px;
