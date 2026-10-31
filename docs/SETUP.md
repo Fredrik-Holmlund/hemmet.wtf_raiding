@@ -45,8 +45,22 @@ roller på sidan: `supabase/functions/sync-discord-roles` frågar Discord med en
    - `CRON_SECRET`: ett långt slumpat lösenord som du hittar på
 4. **Funktionen:** under Edge Functions → Deploy a new function → Via Editor: döp den till `sync-discord-roles`, klistra in
    `index.ts` och stäng av **Verify JWT** (funktionen kontrollerar inloggningen själv).
-5. **Schemat:** under Integrations → Cron, skapa ett jobb var 15:e minut som anropar funktionen med POST och headern
-   `x-cron-secret` med samma värde som `CRON_SECRET`. Då slutar en borttagen roll gälla även för den som inte öppnar sidan.
+5. **Schemat:** kör det här i SQL Editor, med ditt projekt och ditt `CRON_SECRET`. Då slutar en borttagen roll gälla även för den
+   som inte öppnar sidan. Lägg det inte i en migration: `CRON_SECRET` ska inte in i repot.
+
+   ```sql
+   create extension if not exists pg_cron;
+   create extension if not exists pg_net;
+   select cron.schedule('sync-discord-roles', '*/15 * * * *', $$
+     select net.http_post(
+       url := 'https://<projekt>.supabase.co/functions/v1/sync-discord-roles',
+       headers := '{"Content-Type": "application/json", "x-cron-secret": "<CRON_SECRET>"}'::jsonb,
+       body := '{}'::jsonb
+     )
+   $$);
+   ```
+
+   Svaren syns med `select status_code, content from net._http_response order by created desc limit 3;`.
 
 Rollerna hämtas vid varje sidladdning för den som är inloggad. Svarar inte Discord behåller alla sina roller, och hittas inte
 rollnamnen på servern ändras ingenting.
