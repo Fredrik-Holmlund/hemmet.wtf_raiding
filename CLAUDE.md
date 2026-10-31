@@ -67,7 +67,8 @@ men har raidingsidans egen meny: Översikt · Raidgrupper · Roller & ansvar. Lo
   signups:** kryssrutan "Bara grupper som är öppna för signups" i filtret och `#raidgrupper/soker` (knappen "Öppna för signups") visar båda.
   Roller och text heter fortfarande `recruit_roles`, `recruit_note` i koden. Grupperna har inga egna Discord-kanaler (beslut 2026-10-11), så det ska inte stå i texterna.
 - **Namn** visas utan kapslar: klassfärg, och en grön prick när personen är online på Discord (`members.online`; undantaget från "inget grönt",
-  som "lever"-pricken på leveling-sidan). Närvaro kräver en bot som är uppkopplad hela tiden, och den finns inte än. Tills dess syns ingen prick.
+  som "lever"-pricken på leveling-sidan). Status kommer från serverns Discord-widget via `sync-discord-roles`: ungefärlig, matchas på namn, högst 100 personer,
+  uppdateras var 15:e minut. Därför står det aldrig "offline" (beslut 2026-10-31). Exakt status kräver en bot som är uppkopplad hela tiden.
   Assignment-tavlan behåller sina brickor.
 - **Inloggning:** Discord via Supabase (`signIn` i data.js, PKCE så att `?code=` inte krockar med #-adresserna). Allt går att läsa utan inloggning.
   Första inloggningen skapar en medlemsrad utan namn i spelet (`handle_new_user`), och sidan öppnar profilen direkt. Medlemmen syns inte förrän profilen är ifylld.

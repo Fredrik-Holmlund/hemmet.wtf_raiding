@@ -107,7 +107,7 @@ function dutiesOf(m) {
 
 /* ---------- byggstenar ---------- */
 // namn i klassfärg, pricken grön när personen är online på Discord
-// online skrivs av en ständigt uppkopplad bot, som inte finns än. Tills dess är ingen markerad, i stället för att alla ser offline ut.
+// online kommer från Discords widget och är ungefärligt, så sidan säger aldrig "offline": pricken syns bara när någon är online
 const status = m => m.online ? ", online på Discord" : "";
 const who = m => m ? `<button class="who${m.online ? " is-online" : ""}" style="--c:${CLASS_COLORS[m.class] ?? "#fff"}" data-member="${m.id}"
   title="${esc(m.character)}${status(m)}" aria-label="${esc(m.character)}${status(m)}"><i class="who__dot" aria-hidden="true"></i>${esc(m.character)}</button>` : "";

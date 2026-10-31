@@ -62,6 +62,10 @@ roller på sidan: `supabase/functions/sync-discord-roles` frågar Discord med en
 
    Svaren syns med `select status_code, content from net._http_response order by created desc limit 3;`.
 
+**Grön prick:** slå på **Serverinställningar → Widget → Aktivera serverwidget** på Discord. Funktionen läser vilka som är online därifrån,
+vid sidladdning och var 15:e minut. Widgeten visar bara namn och högst 100 personer, så personen matchas på namnet på Discord eller i spelet.
+Den som står som osynlig syns inte.
+
 Rollerna hämtas vid varje sidladdning för den som är inloggad. Svarar inte Discord behåller alla sina roller, och hittas inte
 rollnamnen på servern ändras ingenting.
 

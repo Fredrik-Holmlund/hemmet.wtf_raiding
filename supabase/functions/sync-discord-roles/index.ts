@@ -1,4 +1,4 @@
-// Sätter members.guild_roles och members.in_guild utifrån guildens Discord-server.
+// Sätter members.guild_roles, members.in_guild och members.online utifrån guildens Discord-server.
 //
 // Körs på två sätt:
 //  - av sidan när någon är inloggad (Authorization: personens inloggning): bara den personen
@@ -7,6 +7,8 @@
 // Webbläsaren får aldrig bestämma rollerna: Discord frågas härifrån, med botens hemliga token.
 // Schemat hämtar hela medlemslistan i ett svep, 1000 personer per anrop, så det klarar stora servrar.
 // Det kräver att Server Members Intent är påslaget på boten.
+// Online kommer från serverns widget (Serverinställningar → Widget), som bara visar namn och högst 100 personer.
+// Personen matchas på namnet på Discord eller i spelet, så det är ungefärligt. Är widgeten avstängd ändras ingen status.
 //
 // Hemligheter (Edge Functions → Secrets): DISCORD_BOT_TOKEN, DISCORD_GUILD_ID, CRON_SECRET.
 // SUPABASE_URL och SUPABASE_SERVICE_ROLE_KEY finns automatiskt.
@@ -24,7 +26,7 @@ const GUILD = Deno.env.get("DISCORD_GUILD_ID")!;
 const BOT = { Authorization: `Bot ${Deno.env.get("DISCORD_BOT_TOKEN")}` };
 const CRON_SECRET = Deno.env.get("CRON_SECRET");
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-const COLUMNS = "id, discord_id, guild_roles, in_guild";
+const COLUMNS = "id, discord_id, discord, character, guild_roles, in_guild, online";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -33,7 +35,7 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
-type Member = { id: string; discord_id: string | null; guild_roles: string[]; in_guild: boolean };
+type Member = { id: string; discord_id: string | null; discord: string | null; character: string | null; guild_roles: string[]; in_guild: boolean; online: boolean };
 type Seen = { inGuild: boolean; roles: string[] };
 const NOT_ON_SERVER: Seen = { inGuild: false, roles: [] };
 
@@ -75,14 +77,28 @@ async function one(discordId: string, ids: Map<string, string>): Promise<Seen> {
   return seen((await r.json()).roles, ids);
 }
 
+// Namnen på de som är online. null = vi vet inte, och då ändras ingen status.
+async function onlineNames(): Promise<Set<string> | null> {
+  try {
+    const r = await fetch(`https://discord.com/api/guilds/${GUILD}/widget.json`);
+    if (!r.ok) return null;
+    const widget: { members?: { username: string }[] } = await r.json();
+    return new Set((widget.members ?? []).map(m => m.username.toLowerCase()));
+  } catch {
+    return null;
+  }
+}
+
 // skriver bara det som ändrats
 async function apply(members: Member[], lookup: (m: Member) => Seen) {
+  const names = await onlineNames();
   let changed = 0;
   for (const m of members) {
     if (!m.discord_id) continue;
     const { inGuild, roles } = lookup(m);
-    if (inGuild === m.in_guild && roles.join() === [...m.guild_roles].sort().join()) continue;
-    const { error } = await db.from("members").update({ in_guild: inGuild, guild_roles: roles }).eq("id", m.id);
+    const online = names ? [m.discord, m.character].some(n => n && names.has(n.toLowerCase())) : m.online;
+    if (inGuild === m.in_guild && online === m.online && roles.join() === [...m.guild_roles].sort().join()) continue;
+    const { error } = await db.from("members").update({ in_guild: inGuild, guild_roles: roles, online, last_seen: online ? new Date().toISOString() : undefined }).eq("id", m.id);
     if (error) throw new Error(error.message);
     changed++;
   }
