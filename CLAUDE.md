@@ -27,6 +27,8 @@ Preview-konfigurationen heter `raiding` (port 5174).
 
 ## Filer
 
+`boot.js` väljer sida och header innan modulerna har laddats, så att sidan inte blinkar vid omladdning.
+
 | Fil | Innehåll |
 |---|---|
 | `index.html` | Sidans skal: topbar, de tre sidorna (Start, Raidgrupper, Roller & ansvar), sidopanel |
