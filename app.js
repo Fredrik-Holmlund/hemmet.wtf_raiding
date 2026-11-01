@@ -695,7 +695,7 @@ function renderEditor() {
         </div>
         <label class="field"><span>Ambitionsnivå</span><select name="ambition"><option value="">Inte satt</option>${D.ambitions.map(a => `<option value="${a.level}" ${ambLevel(g.ambition) === a.level ? "selected" : ""}>${a.level} · ${esc(a.name)} (${esc(a.quality)})</option>`).join("")}</select>
           <small>Gruppen får en kod efter nivån, t.ex. A1 eller B2.${g.raid_id ? ` Nu: ${esc(g.raid_id)}.` : ""}</small>
-          <small><button type="button" class="linkish" data-ambition="${g.ambition ?? "A"}">Vad betyder nivåerna?</button></small></label>
+          <small><button type="button" class="linkish" data-ambition="${g.ambition || "A"}">Vad betyder nivåerna?</button></small></label>
         <div class="field"><span>Raiddagar</span>
           <div class="seg seg--multi">${DAYS.map(([k, v]) => `<label><input type="checkbox" name="raid_days" value="${k}" ${g.raid_days?.includes(k) ? "checked" : ""}><span>${cap(v)}</span></label>`).join("")}</div>
         </div>
