@@ -222,6 +222,16 @@ Reglerna sitter i `supabase/migrations`. Ändras de ska `perms.js` och `scripts/
 - Tavlor och mallar valideras i databasen (`board_is_valid`): id:n och färger har fast format.
 - `index.html` har en Content-Security-Policy. En ny extern adress för skript, bilder eller anrop måste läggas till där, annars blockeras den.
 
+## /verify på Discord
+
+Edge function `discord-interactions`: Discord skickar kommandot till funktionen, så ingen bot behöver vara uppkopplad. Anropen är signerade (Ed25519).
+`/verify namn:...` kontrollerar namnet direkt mot Blizzards guildlista och skapar eller uppdaterar raden i `members` (samma rad kopplas vid första inloggningen, `handle_new_user`),
+ger rollen `DISCORD_VERIFIED_ROLE` och sätter smeknamnet med spelets stavning. Svaren är privata.
+- **Namnet är inget bevis.** Vem som helst kan skriva någon annans namn, så varje karaktär kan bara höra till ett Discord-konto. Rollen ger tillträde, aldrig behörighet på sidan.
+- **Går listan inte att läsa** (API:t stängt, `WOW_REALM`/`WOW_GUILD` saknas, Blizzard svarar inte) godkänns namnet och `verify_pending_since` sätts. Saknas namnet i en lista som går att läsa nekas personen.
+- **Efterkontroll** var 15:e minut (`{"action": "recheck"}`): hittas namnet rättas stavning, klass och smeknamn. Saknas det efter ett dygn tas rollen och smeknamnet bort, och raden också om personen inte har loggat in på sidan.
+- Den som lämnar guilden i spelet behåller rollen, tills ledningen beslutar något annat.
+
 ## Discord-boten (plan, inte byggd)
 
 En enda bot för allt som rör Discord. Den kräver backend: bot-token är hemlig och får aldrig ligga på den statiska sidan,
