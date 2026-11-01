@@ -87,6 +87,12 @@ def tests(d):
     d.run("insert into members (discord_id, discord, character) values ('7', 'Bot', 'Bottad')")
     bot = d.user("7", "Riktig")
     check("rad från boten kopplas till kontot", d.run("select count(*) from members m join auth.users u on u.id = m.user_id where u.id = %s and m.character = 'Bottad'", (str(bot),)) == [(1,)])
+    d.login(bot)
+    check("verifieringen syns inte för medlemmar", d.denied("select verify_pending_since from members"))
+    check("verifieringen går inte att ändra själv", d.denied("update members set verify_pending_since = null where user_id = %s", (str(bot),)))
+    d.login()
+    check("verifieringen syns inte utan inloggning", d.denied("select verify_pending_since from members"))
+    d.admin()
     d.run("update members set guild_roles = '{guild_master}' where discord_id = '1'")
     d.run("update members set in_guild = true")
     stranger = d.user("8", "Främling")   # inloggad, men inte med på servern

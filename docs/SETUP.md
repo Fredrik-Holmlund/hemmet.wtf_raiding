@@ -90,6 +90,42 @@ Under *Bild till Discord* på tavlan kan ledningen och gruppens Raid Master, Rai
 1. Lägg upp funktionen `post-assignments` på samma sätt, med **Verify JWT** avstängt.
 2. Ge boten **Bifoga filer** i de tre forumen.
 
+## 5d. /verify på Discord
+
+Medlemmen skriver `/verify namn:Bonk Donkus`. Finns namnet i guilden får personen rollen, smeknamnet och en rad i `members`, så att profilen är ifylld
+vid första inloggningen. Svaret syns bara för personen själv.
+
+1. **Boten:** under OAuth2 → URL Generator, välj scope `bot` och `applications.commands`. Öppna länken och välj servern. Boten ligger kvar.
+2. **Rollen:** ge botens roll **Manage Roles** och **Manage Nicknames**, och dra den över verifieringsrollen i rollistan.
+3. **Hemligheter:** lägg till i Edge Functions → Secrets:
+   - `DISCORD_PUBLIC_KEY`: Public Key under General Information
+   - `DISCORD_VERIFIED_ROLE`: rollens namn, exakt som på servern
+   - `BLIZZARD_CLIENT_ID` och `BLIZZARD_CLIENT_SECRET`: egen klient på [develop.battle.net](https://develop.battle.net)
+   - `WOW_REALM` och `WOW_GUILD`: sätts när Forever-API:t är öppet. Tills dess godkänns namnen utan kontroll. `WOW_NAMESPACE` är `profile-forever-eu` om inget annat sätts.
+4. **Databasen:** kör migrationen `20261101120000_verifiering.sql`.
+5. **Funktionen:** lägg upp `discord-interactions` som de andra, med **Verify JWT** avstängt.
+6. **Kommandot och schemat:** kör det här i SQL Editor, med ditt projekt och ditt `CRON_SECRET`. Det första anropet lägger upp `/verify` på servern, det andra
+   kontrollerar godkända namn i efterhand.
+
+   ```sql
+   select net.http_post(
+     url := 'https://<projekt>.supabase.co/functions/v1/discord-interactions',
+     headers := '{"Content-Type": "application/json", "x-cron-secret": "<CRON_SECRET>"}'::jsonb,
+     body := '{"action": "register"}'::jsonb
+   );
+   select cron.schedule('verify-recheck', '*/15 * * * *', $$
+     select net.http_post(
+       url := 'https://<projekt>.supabase.co/functions/v1/discord-interactions',
+       headers := '{"Content-Type": "application/json", "x-cron-secret": "<CRON_SECRET>"}'::jsonb,
+       body := '{"action": "recheck"}'::jsonb
+     )
+   $$);
+   ```
+
+7. **Adressen:** i Developer Portal under General Information, sätt Interactions Endpoint URL till
+   `https://<projekt>.supabase.co/functions/v1/discord-interactions`. Discord testar adressen när du sparar, så funktionen och `DISCORD_PUBLIC_KEY` måste vara på plats först.
+8. **Smeknamnen:** slå av **Change Nickname** för @everyone och verifieringsrollen, annars går namnet att byta direkt efter verifieringen.
+
 ## 6. Publicera på raiding.hemmet.wtf
 
 1. I repots Settings → Pages: publicera från `main`, mappen `/`.
